@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { GlossaryText } from "@/components/learning/GlossaryText";
 import { MarketMetricLinks } from "@/components/learning/MarketMetricLinks";
 import { QuizBox } from "@/components/learning/QuizBox";
+import { UserNotes } from "@/components/notes/UserNotes";
 import { glossaryTerms } from "@/content/glossary/seed";
 import { lessons } from "@/content/lessons/seed";
 import { getDashboardData } from "@/features/market-data/service";
@@ -48,6 +49,9 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
 
         <MarketMetricLinks metrics={relatedMetrics} />
         <QuizBox quiz={lesson.quiz[0]} lessonSlug={lesson.slug} />
+        <div className="mt-8">
+          <UserNotes targetType="lesson" targetId={lesson.slug} />
+        </div>
 
         <section className="mt-8 rounded-md border border-line bg-paper p-5">
           <h3 className="text-xl font-black text-ink">다음 학습</h3>

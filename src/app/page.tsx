@@ -1,8 +1,18 @@
-﻿import { MetricCard } from "@/components/dashboard/MetricCard";
+﻿import { DailyQuestionCard } from "@/components/dashboard/DailyQuestionCard";
+import { LessonRecommendations } from "@/components/dashboard/LessonRecommendations";
+import { MarketBriefCard } from "@/components/dashboard/MarketBriefCard";
+import { MetricCard } from "@/components/dashboard/MetricCard";
+import { MoneyJourney } from "@/components/dashboard/MoneyJourney";
+import { NewsConnectionPanel } from "@/components/dashboard/NewsConnectionPanel";
 import { MiniFlowMap } from "@/components/flow-map/MiniFlowMap";
 import { LearningProgress } from "@/components/learning/LearningProgress";
 import { LessonRail } from "@/components/learning/LessonRail";
+import { UserNotes } from "@/components/notes/UserNotes";
+import { brandConfig } from "@/config/brand";
 import { lessons } from "@/content/lessons/seed";
+import { selectDailyQuestion } from "@/features/daily-question/questions";
+import { recommendLessons } from "@/features/lesson-recommendations/recommendations";
+import { getMarketBrief } from "@/features/market-brief/market-brief.service";
 import { getDashboardData } from "@/features/market-data/service";
 import { metricById, pickStudyRecommendation, summarizeMarket } from "@/lib/dashboard/insights";
 
@@ -16,6 +26,9 @@ export default async function HomePage() {
   const dashboard = await getDashboardData();
   const marketSummary = summarizeMarket(dashboard.flowSignals);
   const study = pickStudyRecommendation(dashboard.metrics, dashboard.flowSignals);
+  const brief = await getMarketBrief(dashboard.metrics, dashboard.flowSignals, lessons);
+  const dailyQuestion = selectDailyQuestion(dashboard.metrics, lessons);
+  const recommendations = recommendLessons(lessons, dashboard.metrics);
   const marketCap = metricById(dashboard.metrics, "crypto_market_cap");
   const midMetrics = ["btc_dominance", "stablecoin_supply", "defi_tvl"]
     .map((id) => metricById(dashboard.metrics, id))
@@ -29,7 +42,7 @@ export default async function HomePage() {
       <section className="grid min-h-[560px] items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
         <div>
           <span className="inline-flex rounded-md border border-line bg-panel px-3 py-2 text-sm font-black text-marine">
-            Crypto Study Dashboard
+            {brandConfig.productName}
           </span>
           <h2 className="mt-5 max-w-4xl text-4xl font-black leading-[1.08] tracking-normal text-ink md:text-6xl">
             오늘 시장은 어떤 상태일까?
@@ -38,7 +51,7 @@ export default async function HomePage() {
             돈은 지금 어디로 이동하고 있고, 오늘 무엇을 공부하면 좋을까요?
           </p>
           <p className="mt-4 max-w-2xl text-base leading-7 text-muted">
-            암호화폐를 가격표가 아니라 돈의 이동 경로로 공부합니다. 이 화면은 가격을 맞히는 도구가 아니라, 시장 상태와 데이터 신뢰도와 학습 주제를 함께 보는 학습용 대시보드입니다.
+            {brandConfig.tagline} 이 화면은 가격을 맞히는 도구가 아니라, 시장 상태와 데이터 신뢰도와 학습 주제를 함께 보는 학습용 대시보드입니다.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <a href="#flow" className="rounded-md bg-ink px-5 py-3 font-black text-white focus:outline-none focus:ring-2 focus:ring-marine">
@@ -75,6 +88,35 @@ export default async function HomePage() {
         </aside>
       </section>
 
+      <section className="py-6">
+        <MarketBriefCard brief={brief} />
+      </section>
+
+      <section id="flow" className="space-y-5 py-10">
+        <MoneyJourney />
+        <div>
+          <div className="mb-5 grid gap-3 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
+            <div>
+              <p className="text-xs font-black uppercase text-forest">Money Flow Engine</p>
+              <h2 className="text-3xl font-black text-ink md:text-4xl">돈의 흐름 지도</h2>
+            </div>
+            <p className="rounded-lg border border-line bg-panel p-4 text-sm font-bold leading-6 text-muted">
+              {marketSummary.text}
+            </p>
+          </div>
+          <MiniFlowMap signals={dashboard.flowSignals} />
+        </div>
+      </section>
+
+      <section className="grid gap-5 py-10 lg:grid-cols-[1.2fr_0.8fr]">
+        <DailyQuestionCard question={dailyQuestion} metrics={dashboard.metrics} />
+        <UserNotes targetType="daily-question" targetId={dailyQuestion.id} />
+      </section>
+
+      <section id="learn" className="space-y-5 py-10">
+        <LessonRecommendations recommendations={recommendations} lessons={lessons} />
+      </section>
+
       <section id="market" className="py-10">
         <div className="mb-5 flex flex-col justify-between gap-3 md:flex-row md:items-end">
           <div>
@@ -96,29 +138,20 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section id="flow" className="py-10">
-        <div className="mb-5 grid gap-3 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
-          <div>
-            <p className="text-xs font-black uppercase text-forest">Money Flow Engine</p>
-            <h2 className="text-3xl font-black text-ink md:text-4xl">돈의 흐름 지도</h2>
-          </div>
-          <p className="rounded-lg border border-line bg-panel p-4 text-sm font-bold leading-6 text-muted">
-            {marketSummary.text}
-          </p>
-        </div>
-        <MiniFlowMap signals={dashboard.flowSignals} />
-      </section>
-
-      <section id="learn" className="space-y-5 py-10">
+      <section className="space-y-5 py-10">
         <LearningProgress totalLessons={lessons.length} />
         <div>
           <p className="text-xs font-black uppercase text-forest">Learning Content</p>
-          <h2 className="text-3xl font-black text-ink md:text-4xl">오늘 공부할 개념</h2>
+          <h2 className="text-3xl font-black text-ink md:text-4xl">학습 로드맵</h2>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-muted">
             시장 카드와 돈의 흐름에서 자주 마주치는 개념을 질문형 카드로 정리했습니다.
           </p>
         </div>
         <LessonRail />
+      </section>
+
+      <section className="py-10">
+        <NewsConnectionPanel />
       </section>
     </main>
   );
