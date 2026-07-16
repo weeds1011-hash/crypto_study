@@ -1,7 +1,11 @@
 ﻿import Link from "next/link";
 import { notFound } from "next/navigation";
+import { GlossaryText } from "@/components/learning/GlossaryText";
+import { MarketMetricLinks } from "@/components/learning/MarketMetricLinks";
 import { QuizBox } from "@/components/learning/QuizBox";
+import { glossaryTerms } from "@/content/glossary/seed";
 import { lessons } from "@/content/lessons/seed";
+import { getDashboardData } from "@/features/market-data/service";
 
 export function generateStaticParams() {
   return lessons.map((lesson) => ({ slug: lesson.slug }));
@@ -12,29 +16,49 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
   const lesson = lessons.find((item) => item.slug === slug);
   if (!lesson) notFound();
 
+  const dashboard = await getDashboardData();
+  const relatedMetrics = dashboard.metrics.filter((metric) => lesson.relatedMetricIds.includes(metric.metricId));
+  const nextLesson = lesson.nextLessons[0] ? lessons.find((item) => item.slug === lesson.nextLessons[0]) : null;
+
   return (
-    <main className="mx-auto max-w-4xl px-4 py-10">
+    <main className="mx-auto max-w-5xl px-4 py-10">
       <Link href="/learn" className="text-sm font-black text-marine">
-        학습 목차로 돌아가기
+        학습 로드맵으로 돌아가기
       </Link>
       <article className="mt-5 rounded-lg border border-line bg-panel p-6 shadow-sm">
-        <p className="text-xs font-black uppercase text-forest">{lesson.categoryId}</p>
-        <h2 className="mt-2 text-4xl font-black text-ink">{lesson.title}</h2>
-        <p className="mt-4 text-lg leading-8 text-muted">{lesson.summary}</p>
-
-        <Section title="30초 요약" body={lesson.simpleExplanation} />
-        <Section title="생활 속 비유" body={lesson.analogy} />
-        <Section title="자세한 원리" body={lesson.detailedExplanation} />
-        <Section title="왜 중요한가" body={lesson.whyItMatters} />
-
-        <div className="mt-8 grid gap-4 md:grid-cols-2">
-          <ListBlock title="실제 예시" items={lesson.examples.map((item) => `${item.title}: ${item.description}`)} />
-          <ListBlock title="자주 하는 오해" items={lesson.misconceptions} />
-          <ListBlock title="위험과 한계" items={lesson.risks} />
-          <ListBlock title="연결 지표" items={lesson.relatedMetricIds} />
+        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase text-forest">{lesson.categoryId}</p>
+            <h2 className="mt-2 text-4xl font-black text-ink">{lesson.title}</h2>
+            <p className="mt-4 text-lg leading-8 text-muted">{lesson.summary}</p>
+          </div>
+          <div className="rounded-md bg-paper p-4 text-sm font-bold text-muted">
+            {lesson.estimatedMinutes}분 · {lesson.difficulty}
+          </div>
         </div>
 
-        <QuizBox quiz={lesson.quiz[0]} />
+        <Section title="30초 요약" body={lesson.simpleExplanation} />
+        <Section title="쉬운 비유" body={lesson.analogy} />
+        <Section title="핵심 개념" body={lesson.detailedExplanation} />
+
+        <div className="mt-8 grid gap-4 md:grid-cols-2">
+          <ListBlock title="실제 사례" items={lesson.examples.map((item) => `${item.title}: ${item.description}`)} />
+          <ListBlock title="자주 하는 오해" items={lesson.misconceptions} />
+        </div>
+
+        <MarketMetricLinks metrics={relatedMetrics} />
+        <QuizBox quiz={lesson.quiz[0]} lessonSlug={lesson.slug} />
+
+        <section className="mt-8 rounded-md border border-line bg-paper p-5">
+          <h3 className="text-xl font-black text-ink">다음 학습</h3>
+          {nextLesson ? (
+            <Link href={`/learn/${nextLesson.slug}`} className="mt-3 inline-flex rounded-md bg-ink px-4 py-2 text-sm font-black text-white">
+              {nextLesson.title}
+            </Link>
+          ) : (
+            <p className="mt-3 text-sm leading-6 text-muted">마지막 수업입니다. 로드맵에서 완료율을 확인해보세요.</p>
+          )}
+        </section>
       </article>
     </main>
   );
@@ -44,7 +68,7 @@ function Section({ title, body }: { title: string; body: string }) {
   return (
     <section className="mt-8">
       <h3 className="text-xl font-black text-ink">{title}</h3>
-      <p className="mt-3 leading-7 text-muted">{body}</p>
+      <GlossaryText text={body} terms={glossaryTerms} />
     </section>
   );
 }
