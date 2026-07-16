@@ -13,6 +13,9 @@ const navItems = [
   { href: "/map", label: "암호화폐 지도" },
   { href: "/money-flow", label: "돈의 흐름" },
   { href: "/markets", label: "시장 분석" },
+  { href: "/chains", label: "체인 비교" },
+  { href: "/coins/btc", label: "코인 상세" },
+  { href: "/alerts", label: "관심·알림" },
   { href: "/glossary", label: "용어사전" },
 ];
 

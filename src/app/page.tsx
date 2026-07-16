@@ -15,6 +15,7 @@ import { recommendLessons } from "@/features/lesson-recommendations/recommendati
 import { getMarketBrief } from "@/features/market-brief/market-brief.service";
 import { getDashboardData } from "@/features/market-data/service";
 import { metricById, pickStudyRecommendation, summarizeMarket } from "@/lib/dashboard/insights";
+import { getLatestNews } from "@/server/services/news-service";
 
 const modeLabel = {
   mock: "샘플 데이터",
@@ -29,6 +30,7 @@ export default async function HomePage() {
   const brief = await getMarketBrief(dashboard.metrics, dashboard.flowSignals, lessons);
   const dailyQuestion = selectDailyQuestion(dashboard.metrics, lessons);
   const recommendations = recommendLessons(lessons, dashboard.metrics);
+  const news = await getLatestNews(4);
   const marketCap = metricById(dashboard.metrics, "crypto_market_cap");
   const midMetrics = ["btc_dominance", "stablecoin_supply", "defi_tvl"]
     .map((id) => metricById(dashboard.metrics, id))
@@ -151,7 +153,7 @@ export default async function HomePage() {
       </section>
 
       <section className="py-10">
-        <NewsConnectionPanel />
+        <NewsConnectionPanel items={news.items} meta={news.meta} />
       </section>
     </main>
   );
