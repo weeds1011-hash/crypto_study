@@ -6,3 +6,5 @@ out
 dist
 build
 *.log
+
+.vercel
