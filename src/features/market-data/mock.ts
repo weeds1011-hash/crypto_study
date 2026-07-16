@@ -1,0 +1,147 @@
+﻿import type { MarketDashboardPayload, MetricSnapshot } from "@/types";
+import { calculateFlowSignals } from "@/features/flow-signals/engine";
+
+const now = new Date().toISOString();
+
+function series(values: number[]) {
+  return values.map((value, index) => ({ timestamp: `D-${values.length - 1 - index}`, value }));
+}
+
+function mockFieldStatus() {
+  return {
+    value: "mock" as const,
+    change24h: "mock" as const,
+    change7d: "mock" as const,
+    change30d: "mock" as const,
+    series: "mock" as const,
+  };
+}
+
+export const mockMetrics: MetricSnapshot[] = [
+  {
+    metricId: "global_liquidity",
+    label: "세계 유동성",
+    value: 106.8,
+    unit: "index",
+    change24h: 0.2,
+    change7d: 1.1,
+    change30d: 2.8,
+    sourceId: "mock-macro",
+    updatedAt: now,
+    confidence: "medium",
+    isEstimated: true,
+    dataStatus: "mock",
+    fieldStatus: mockFieldStatus(),
+    interpretation: "샘플 기준으로 유동성이 완만하게 개선된 상황입니다.",
+    caution: "샘플 지표입니다. 실제 통화량과 중앙은행 데이터를 연결하면 정밀도가 올라갑니다.",
+    learnSlug: "what-is-money",
+    series: series([101, 102.1, 103.4, 104, 105.6, 106.8]),
+  },
+  {
+    metricId: "fed_rate",
+    label: "달러 금리",
+    value: 4.75,
+    unit: "%",
+    change24h: 0,
+    change7d: 0,
+    change30d: -0.25,
+    sourceId: "mock-fred",
+    updatedAt: now,
+    confidence: "medium",
+    isEstimated: true,
+    dataStatus: "mock",
+    fieldStatus: mockFieldStatus(),
+    interpretation: "샘플 기준으로 금리 부담이 전월보다 낮아진 설정입니다.",
+    caution: "실제 FRED 연동 전까지는 샘플 값입니다.",
+    learnSlug: "what-is-money",
+    series: series([5.25, 5.25, 5, 5, 4.75, 4.75]),
+  },
+  {
+    metricId: "crypto_market_cap",
+    label: "암호화폐 전체 시가총액",
+    value: 2.82,
+    unit: "T USD",
+    change24h: 1.7,
+    change7d: 4.4,
+    change30d: 8.9,
+    sourceId: "mock-coingecko",
+    updatedAt: now,
+    confidence: "medium",
+    isEstimated: true,
+    dataStatus: "mock",
+    fieldStatus: mockFieldStatus(),
+    interpretation: "샘플 기준으로 전체 시장 규모가 증가한 상황입니다.",
+    caution: "가격 상승만으로 시가총액이 증가할 수 있어 거래량 확인이 필요합니다.",
+    learnSlug: "what-is-crypto",
+    series: series([2.55, 2.61, 2.63, 2.7, 2.76, 2.82]),
+  },
+  {
+    metricId: "btc_dominance",
+    label: "비트코인 도미넌스",
+    value: 53.4,
+    unit: "%",
+    change24h: -0.3,
+    change7d: -1.1,
+    change30d: -2.2,
+    sourceId: "mock-coingecko",
+    updatedAt: now,
+    confidence: "medium",
+    isEstimated: true,
+    dataStatus: "mock",
+    fieldStatus: mockFieldStatus(),
+    interpretation: "샘플 기준으로 비트코인 비중이 낮아져 알트코인 관심이 커지는 모습입니다.",
+    caution: "도미넌스 하락이 항상 알트 강세를 보장하지는 않습니다.",
+    learnSlug: "what-is-crypto",
+    series: series([56.1, 55.2, 54.7, 54.2, 53.7, 53.4]),
+  },
+  {
+    metricId: "stablecoin_supply",
+    label: "스테이블코인 공급량",
+    value: 169.2,
+    unit: "B USD",
+    change24h: 0.4,
+    change7d: 1.9,
+    change30d: 5.3,
+    sourceId: "mock-defillama",
+    updatedAt: now,
+    confidence: "medium",
+    isEstimated: true,
+    dataStatus: "mock",
+    fieldStatus: mockFieldStatus(),
+    interpretation: "샘플 기준으로 시장 안의 달러성 대기 자금이 늘어난 상황입니다.",
+    caution: "공급 증가만으로 매수 유입을 확정하면 안 됩니다.",
+    learnSlug: "stablecoins",
+    series: series([160, 162, 164.5, 166.1, 168, 169.2]),
+  },
+  {
+    metricId: "defi_tvl",
+    label: "DeFi TVL",
+    value: 98.7,
+    unit: "B USD",
+    change24h: -0.2,
+    change7d: 0.8,
+    change30d: 3.4,
+    sourceId: "mock-defillama",
+    updatedAt: now,
+    confidence: "medium",
+    isEstimated: true,
+    dataStatus: "mock",
+    fieldStatus: mockFieldStatus(),
+    interpretation: "샘플 기준으로 디파이에 머무는 자금이 한 달 기준 증가한 상황입니다.",
+    caution: "토큰 가격 상승 효과와 실제 예치 증가를 구분해야 합니다.",
+    learnSlug: "tvl",
+    series: series([92, 93.4, 95, 97.1, 98.9, 98.7]),
+  },
+];
+
+export function buildMockDashboard(): MarketDashboardPayload {
+  const flowSignals = calculateFlowSignals(mockMetrics);
+  return {
+    mode: "mock",
+    updatedAt: now,
+    summary: "샘플 데이터 기반 화면입니다. 실제 투자 판단이 아니라 학습용 흐름과 UI를 확인하는 데 사용하세요.",
+    metrics: mockMetrics,
+    flowSignals,
+    dataWarnings: ["현재는 샘플 데이터 모드입니다.", "실제 API 연동 전까지 출처는 mock으로 표시됩니다."],
+  };
+}
