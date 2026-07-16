@@ -16,11 +16,15 @@ export interface RetrievalContext {
 
 export interface RetrievedContext {
   metrics: MetricSnapshot[];
+  metricScores: Record<string, number>;
   news: NormalizedNewsItem[];
+  newsScores: Record<string, number>;
   lessons: typeof lessons;
+  lessonScores: Record<string, number>;
   terms: GlossaryTerm[];
   coins: typeof coinProfiles;
   graph: KnowledgeGraph;
+  hasDirectResults: boolean;
 }
 
 const aliases: Record<string, string[]> = {
@@ -64,13 +68,42 @@ export function retrieveFromApp(question: string, context: RetrievalContext): Re
     .slice(0, 4)
     .map((item) => item.term);
 
+  const metricCandidates = context.metrics
+    .map((metric) => ({
+      metric,
+      score: Math.max(expandedIds.has(metric.metricId) ? 1 : 0, scoreText(query, `${metric.label} ${metric.metricId} ${aliases[metric.metricId]?.join(" ") ?? ""}`)),
+    }))
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score);
+  const newsCandidates = context.news
+    .map((item) => ({
+      item,
+      score: Math.max(expandedIds.has(item.id) ? 1 : 0, item.relatedMetricIds.some((id) => expandedIds.has(id)) ? 1 : 0, scoreText(query, `${item.title} ${item.summary ?? ""} ${item.category}`)),
+    }))
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score);
+  const lessonCandidates = context.lessons
+    .map((lesson) => ({
+      lesson,
+      score: Math.max(expandedIds.has(lesson.slug) ? 1 : 0, lesson.relatedMetricIds.some((id) => expandedIds.has(id)) ? 1 : 0, scoreText(query, `${lesson.title} ${lesson.summary} ${lesson.relatedTerms.join(" ")}`)),
+    }))
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score);
+  const metrics = metricCandidates.slice(0, 3).map((item) => item.metric);
+  const relatedNews = newsCandidates.slice(0, 3).map((item) => item.item);
+  const relatedLessons = lessonCandidates.slice(0, 3).map((item) => item.lesson);
+
   return {
     graph: context.graph,
-    metrics: context.metrics.filter((metric) => expandedIds.has(metric.metricId) || scoreText(query, `${metric.label} ${metric.metricId}`) > 0).slice(0, 5),
-    news: context.news.filter((item) => expandedIds.has(item.id) || item.relatedMetricIds.some((id) => expandedIds.has(id))).slice(0, 4),
-    lessons: context.lessons.filter((lesson) => expandedIds.has(lesson.slug) || lesson.relatedMetricIds.some((id) => expandedIds.has(id))).slice(0, 4),
+    metrics,
+    metricScores: Object.fromEntries(metricCandidates.map((item) => [item.metric.metricId, item.score])),
+    news: relatedNews,
+    newsScores: Object.fromEntries(newsCandidates.map((item) => [item.item.id, item.score])),
+    lessons: relatedLessons,
+    lessonScores: Object.fromEntries(lessonCandidates.map((item) => [item.lesson.slug, item.score])),
     terms,
     coins: context.coins.filter((coin) => expandedIds.has(coin.symbol) || expandedIds.has(coin.chainId) || scoreText(query, `${coin.name} ${coin.symbol} ${coin.oneLine}`) > 0).slice(0, 3),
+    hasDirectResults: metrics.length > 0 || relatedNews.length > 0 || relatedLessons.length > 0 || terms.length > 0,
   };
 }
 

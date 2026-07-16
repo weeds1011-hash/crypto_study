@@ -7,6 +7,8 @@ import { buildMentorAnswer } from "@/features/ai-mentor/answer";
 import { buildFlowDiagram } from "@/features/ai-mentor/diagram";
 import { createRetrievalContext, retrieveFromApp } from "@/features/ai-mentor/retrieval";
 import { buildStudyCoach } from "@/features/ai-mentor/study-coach";
+import { MentorDiagramView } from "./MentorDiagramView";
+import { MentorReviewQuiz } from "./MentorReviewQuiz";
 import type { NormalizedNewsItem } from "@/server/providers/types";
 import type { MetricSnapshot } from "@/types";
 
@@ -123,14 +125,10 @@ export function AIMentorPanel({ metrics, news }: { metrics: MetricSnapshot[]; ne
           {diagram ? (
             <section className="mt-5 rounded-md border border-line bg-panel p-4">
               <h3 className="font-black text-ink">{diagram.title}</h3>
-              <pre className="mt-3 overflow-x-auto rounded-md bg-ink p-4 text-xs leading-6 text-white" aria-label="Mermaid 다이어그램 코드">{diagram.mermaid}</pre>
+              <MentorDiagramView diagram={diagram} />
             </section>
           ) : null}
-          <section className="mt-5 rounded-md border border-line bg-panel p-4">
-            <h3 className="font-black text-ink">복습 문제</h3>
-            <p className="mt-2 text-sm font-bold text-muted">{coach.reviewQuiz.question}</p>
-            <p className="mt-2 text-sm leading-6 text-muted">정답 해설: {coach.reviewQuiz.explanation}</p>
-          </section>
+          <MentorReviewQuiz quiz={coach.reviewQuiz} lessonSlug={coach.reviewLessonSlug} />
         </article>
       ) : null}
     </section>
