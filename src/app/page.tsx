@@ -1,4 +1,5 @@
-﻿import { DailyQuestionCard } from "@/components/dashboard/DailyQuestionCard";
+﻿import { AIMentorPanel } from "@/components/ai-mentor/AIMentorPanel";
+import { DailyQuestionCard } from "@/components/dashboard/DailyQuestionCard";
 import { LessonRecommendations } from "@/components/dashboard/LessonRecommendations";
 import { MarketBriefCard } from "@/components/dashboard/MarketBriefCard";
 import { MetricCard } from "@/components/dashboard/MetricCard";
@@ -94,6 +95,10 @@ export default async function HomePage() {
         <MarketBriefCard brief={brief} />
       </section>
 
+      <section className="py-6">
+        <AIMentorPanel metrics={dashboard.metrics} news={news.items} />
+      </section>
+
       <section id="flow" className="space-y-5 py-10">
         <MoneyJourney />
         <div>
@@ -168,3 +173,5 @@ function SummaryTile({ label, value, body }: { label: string; value: string; bod
     </article>
   );
 }
+
+
