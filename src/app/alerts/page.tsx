@@ -1,5 +1,8 @@
 import { AlertRulesPanel } from "@/components/alerts/AlertRulesPanel";
 import { WatchlistPanel } from "@/components/watchlist/WatchlistPanel";
+import { alertsMetadata } from "./metadata";
+
+export const metadata = alertsMetadata;
 
 export default function AlertsPage() {
   return (

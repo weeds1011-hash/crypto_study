@@ -21,6 +21,17 @@ a {
   -webkit-tap-highlight-color: transparent;
 }
 
+button,
+a,
+select {
+  min-height: 44px;
+}
+
+:focus-visible {
+  outline: 3px solid #245a9b;
+  outline-offset: 2px;
+}
+
 .react-flow__attribution {
   display: none;
 }

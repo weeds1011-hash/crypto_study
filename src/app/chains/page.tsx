@@ -4,6 +4,9 @@ import { WatchlistPanel } from "@/components/watchlist/WatchlistPanel";
 import { chainDefinitions } from "@/features/onchain/definitions";
 import { buildOnchainInsight } from "@/features/onchain/insights";
 import { getChainMetrics } from "@/server/services/onchain-service";
+import { chainsMetadata } from "./metadata";
+
+export const metadata = chainsMetadata;
 
 export default async function ChainsPage() {
   const result = await getChainMetrics();

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { NewsConnectionPanel } from "@/components/dashboard/NewsConnectionPanel";
 import { OnchainInsightCard } from "@/components/onchain/OnchainInsightCard";
@@ -6,11 +7,39 @@ import { WatchlistPanel } from "@/components/watchlist/WatchlistPanel";
 import { lessons } from "@/content/lessons/seed";
 import { coinProfiles, profileBySymbol } from "@/features/onchain/coin-profiles";
 import { metricDefinitionById } from "@/features/onchain/definitions";
+import { siteUrl } from "@/config/routes";
 import { getLatestNews } from "@/server/services/news-service";
 import { getChainInsight } from "@/server/services/onchain-service";
 
 export function generateStaticParams() {
   return coinProfiles.map((profile) => ({ symbol: profile.symbol }));
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ symbol: string }> }): Promise<Metadata> {
+  const { symbol } = await params;
+  const profile = profileBySymbol(symbol);
+  if (!profile) {
+    return {
+      title: "코인 정보를 찾을 수 없습니다",
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const title = `${profile.name} 상세 분석 | Crypto Study`;
+  const description = `${profile.name}의 공급 구조, 네트워크 활동, 위험과 한계를 학습 관점으로 정리합니다.`;
+  return {
+    title,
+    description,
+    alternates: { canonical: `/coins/${profile.symbol}` },
+    openGraph: {
+      title,
+      description,
+      url: `${siteUrl}/coins/${profile.symbol}`,
+      type: "article",
+      siteName: "Crypto Study",
+      locale: "ko_KR",
+    },
+  };
 }
 
 export default async function CoinDetailPage({ params }: { params: Promise<{ symbol: string }> }) {
