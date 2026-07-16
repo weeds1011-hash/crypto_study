@@ -2,17 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { courses } from "@/content/courses/university";
 import type { Lesson } from "@/types";
 
-const roadmap = [
-  { title: "돈과 화폐", note: "돈의 기능과 유동성 이해" },
-  { title: "암호화폐와 블록체인", note: "암호화폐가 필요한 이유" },
-  { title: "비트코인과 이더리움", note: "대표 자산의 차이" },
-  { title: "스테이블코인과 DeFi", note: "시장 안의 현금성과 예치 자금" },
-  { title: "토큰 경제학", note: "공급량, 락업, FDV" },
-  { title: "시장과 돈의 흐름", note: "여러 지표를 조합해 읽기" },
-  { title: "온체인 데이터와 위험", note: "투명한 데이터와 해석의 한계" },
-];
+const roadmap = courses.map((course) => ({ title: course.title, note: course.oneLineSummary }));
 
 function readCompleted() {
   try {
@@ -53,11 +46,11 @@ export function LearningRoadmap({ lessons }: { lessons: Lesson[] }) {
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-xs font-black uppercase text-forest">Roadmap</p>
-          <h2 className="mt-1 text-3xl font-black text-ink">순서대로 배우는 7단계</h2>
+          <h2 className="mt-1 text-3xl font-black text-ink">Crypto University 4개 코스</h2>
         </div>
         <p className="text-sm font-bold text-muted">잠금은 추천 순서 표시이며, 수업은 언제든 열 수 있습니다.</p>
       </div>
-      <div className="mt-5 grid gap-3 lg:grid-cols-7">
+      <div className="mt-5 grid gap-3 lg:grid-cols-4">
         {stages.map((stage) => {
           const firstLesson = stage.lessons[0];
           return (

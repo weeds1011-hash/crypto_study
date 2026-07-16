@@ -85,7 +85,7 @@ export function retrieveFromApp(question: string, context: RetrievalContext): Re
   const lessonCandidates = context.lessons
     .map((lesson) => ({
       lesson,
-      score: Math.max(expandedIds.has(lesson.slug) ? 1 : 0, lesson.relatedMetricIds.some((id) => expandedIds.has(id)) ? 1 : 0, scoreText(query, `${lesson.title} ${lesson.summary} ${lesson.relatedTerms.join(" ")}`)),
+      score: Math.max(expandedIds.has(lesson.slug) ? 3 : 0, lesson.relatedMetricIds.some((id) => expandedIds.has(id)) ? 2 : 0, scoreText(query, `${lesson.title} ${lesson.summary} ${lesson.relatedTerms.join(" ")} ${lesson.slug}`)),
     }))
     .filter((item) => item.score > 0)
     .sort((a, b) => b.score - a.score);

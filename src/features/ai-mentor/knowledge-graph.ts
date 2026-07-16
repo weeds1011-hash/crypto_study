@@ -1,4 +1,5 @@
 import { lessons } from "@/content/lessons/seed";
+import { universityLessonsById } from "@/content/courses/university";
 import { coinProfiles } from "@/features/onchain/coin-profiles";
 import type { NormalizedNewsItem } from "@/server/providers/types";
 import type { MetricSnapshot } from "@/types";
@@ -55,13 +56,15 @@ export function buildKnowledgeGraph(metrics: MetricSnapshot[], news: NormalizedN
     summary: coin.networkActivity,
   }));
 
-  const lessonMetricEdges = lessons.flatMap((lesson) =>
-    lesson.relatedMetricIds.map<KnowledgeEdge>((metricId) => ({
-      sourceId: lesson.slug,
-      targetId: metricId,
-      relation: "uses_metric",
-    })),
-  );
+  const lessonMetricEdges = lessons.flatMap((lesson) => {
+    const universityLesson = universityLessonsById.get(lesson.slug);
+    const metricEdges = lesson.relatedMetricIds.map<KnowledgeEdge>((metricId) => ({ sourceId: lesson.slug, targetId: metricId, relation: "uses_metric" }));
+    const coinEdges = (universityLesson?.relatedCoins ?? []).map<KnowledgeEdge>((coinId) => ({ sourceId: lesson.slug, targetId: coinId, relation: "related_to" }));
+    const newsEdges = (universityLesson?.relatedNewsTags ?? []).map<KnowledgeEdge>((tag) => ({ sourceId: lesson.slug, targetId: tag, relation: "mentions" }));
+    const glossaryEdges = (universityLesson?.glossaryTerms ?? []).map<KnowledgeEdge>((term) => ({ sourceId: lesson.slug, targetId: term, relation: "explains" }));
+    const prerequisiteEdges = lesson.prerequisites.map<KnowledgeEdge>((prerequisite) => ({ sourceId: prerequisite, targetId: lesson.slug, relation: "related_to" }));
+    return [...metricEdges, ...coinEdges, ...newsEdges, ...glossaryEdges, ...prerequisiteEdges];
+  });
   const newsEdges = news.flatMap((item) => [
     ...item.relatedMetricIds.map<KnowledgeEdge>((metricId) => ({ sourceId: item.id, targetId: metricId, relation: "impacts_path" })),
     ...item.relatedLessonIds.map<KnowledgeEdge>((lessonId) => ({ sourceId: item.id, targetId: lessonId, relation: "related_to" })),
