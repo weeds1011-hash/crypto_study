@@ -1,4 +1,4 @@
-import { glossaryTerms } from "@/content/glossary/seed";
+﻿import { glossaryTerms } from "@/content/glossary/seed";
 import { lessons } from "@/content/lessons/seed";
 import { coinProfiles } from "@/features/onchain/coin-profiles";
 import type { NormalizedNewsItem } from "@/server/providers/types";
@@ -31,11 +31,23 @@ const aliases: Record<string, string[]> = {
   btc: ["bitcoin", "비트코인", "btc"],
   eth: ["ethereum", "이더리움", "eth"],
   sol: ["solana", "솔라나", "sol"],
-  stablecoin_supply: ["stablecoin", "스테이블코인", "usdt", "usdc"],
-  defi_tvl: ["tvl", "defi", "디파이"],
+  stablecoin_supply: ["stablecoin", "스테이블코인", "공급", "공급이", "중요해", "스테이블코인 공급", "usdt", "usdc"],
+  defi_tvl: ["tvl", "defi", "디파이", "예치"],
   btc_dominance: ["dominance", "도미넌스", "비트코인 비중"],
   fed_rate: ["fed", "fomc", "금리", "연준"],
   global_liquidity: ["liquidity", "유동성", "달러"],
+};
+
+const canonicalLessonByToken: Record<string, string> = {
+  stablecoin: "stablecoins",
+  "스테이블코인": "stablecoins",
+  tvl: "tvl",
+  defi: "tvl",
+  "디파이": "tvl",
+  bitcoin: "bitcoin-ethereum",
+  "비트코인": "bitcoin-ethereum",
+  ethereum: "bitcoin-ethereum",
+  "이더리움": "bitcoin-ethereum",
 };
 
 export function createRetrievalContext(metrics: MetricSnapshot[], news: NormalizedNewsItem[]): RetrievalContext {
@@ -71,7 +83,7 @@ export function retrieveFromApp(question: string, context: RetrievalContext): Re
   const metricCandidates = context.metrics
     .map((metric) => ({
       metric,
-      score: Math.max(expandedIds.has(metric.metricId) ? 1 : 0, scoreText(query, `${metric.label} ${metric.metricId} ${aliases[metric.metricId]?.join(" ") ?? ""}`)),
+      score: (expandedIds.has(metric.metricId) ? 1 : 0) + scoreText(query, `${metric.label} ${metric.metricId} ${aliases[metric.metricId]?.join(" ") ?? ""}`),
     }))
     .filter((item) => item.score > 0)
     .sort((a, b) => b.score - a.score);
@@ -85,13 +97,16 @@ export function retrieveFromApp(question: string, context: RetrievalContext): Re
   const lessonCandidates = context.lessons
     .map((lesson) => ({
       lesson,
-      score: Math.max(expandedIds.has(lesson.slug) ? 3 : 0, lesson.relatedMetricIds.some((id) => expandedIds.has(id)) ? 2 : 0, scoreText(query, `${lesson.title} ${lesson.summary} ${lesson.relatedTerms.join(" ")} ${lesson.slug}`)),
+      score:
+        (expandedIds.has(lesson.slug) ? 3 : 0) +
+        (lesson.relatedMetricIds.some((id) => expandedIds.has(id)) ? 2 : 0) +
+        scoreText(query, `${lesson.title} ${lesson.summary} ${lesson.relatedTerms.join(" ")} ${lesson.slug}`),
     }))
     .filter((item) => item.score > 0)
     .sort((a, b) => b.score - a.score);
   const metrics = metricCandidates.slice(0, 3).map((item) => item.metric);
   const relatedNews = newsCandidates.slice(0, 3).map((item) => item.item);
-  const relatedLessons = lessonCandidates.slice(0, 3).map((item) => item.lesson);
+  const relatedLessons = withCanonicalLesson(query, lessonCandidates.slice(0, 3).map((item) => item.lesson), context.lessons);
 
   return {
     graph: context.graph,
@@ -107,6 +122,14 @@ export function retrieveFromApp(question: string, context: RetrievalContext): Re
   };
 }
 
+function withCanonicalLesson(query: string, selected: typeof lessons, allLessons: typeof lessons) {
+  const canonicalSlug = Object.entries(canonicalLessonByToken).find(([token]) => query.includes(token))?.[1];
+  if (!canonicalSlug || selected.some((lesson) => lesson.slug === canonicalSlug)) return selected;
+  const canonical = allLessons.find((lesson) => lesson.slug === canonicalSlug);
+  if (!canonical) return selected;
+  return [...selected.slice(0, 2), canonical];
+}
+
 function scoreText(query: string, text: string) {
   const tokens = tokenize(query);
   const haystack = normalize(text);
@@ -120,5 +143,5 @@ function tokenize(value: string) {
 }
 
 function normalize(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9가-힣%.\s]/g, " ");
+  return value.toLowerCase().replace(/[^a-z0-9가-힣.\s]/g, " ");
 }

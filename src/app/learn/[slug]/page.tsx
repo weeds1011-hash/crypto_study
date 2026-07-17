@@ -8,7 +8,7 @@ import { MarketMetricLinks } from "@/components/learning/MarketMetricLinks";
 import { PrerequisiteStatus } from "@/components/learning/PrerequisiteStatus";
 import { QuizBox } from "@/components/learning/QuizBox";
 import { UserNotes } from "@/components/notes/UserNotes";
-import { courseForLesson, moduleForLesson } from "@/content/courses/university";
+import { courseForLesson, moduleForLesson, universityLessonsById } from "@/content/courses/university";
 import { glossaryTerms } from "@/content/glossary/seed";
 import { lessons } from "@/content/lessons/seed";
 import { getDashboardData } from "@/features/market-data/service";
@@ -25,6 +25,11 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
   const dashboard = await getDashboardData();
   const relatedMetrics = dashboard.metrics.filter((metric) => lesson.relatedMetricIds.includes(metric.metricId));
   const nextLesson = lesson.nextLessons[0] ? lessons.find((item) => item.slug === lesson.nextLessons[0]) : null;
+  const academyLesson = universityLessonsById.get(lesson.slug);
+  const previousLesson = academyLesson?.previousLesson ? lessons.find((item) => item.slug === academyLesson.previousLesson) : null;
+  const relatedLessons = (academyLesson?.relatedLessons ?? [])
+    .map((relatedSlug) => lessons.find((item) => item.slug === relatedSlug))
+    .filter((item): item is NonNullable<typeof item> => item != null);
   const course = courseForLesson(lesson.slug);
   const moduleInfo = moduleForLesson(lesson.slug);
   const moduleTitle = moduleInfo ? `${moduleInfo.title} / ${moduleInfo.total}` : undefined;
@@ -69,14 +74,33 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
         </div>
 
         <section className="mt-8 rounded-md border border-line bg-paper p-5">
-          <h3 className="text-xl font-black text-ink">다음 학습</h3>
-          {nextLesson ? (
-            <Link href={`/learn/${nextLesson.slug}`} className="mt-3 inline-flex min-h-11 items-center rounded-md bg-ink px-4 py-2 text-sm font-black text-white focus:outline-none focus:ring-2 focus:ring-marine">
-              {nextLesson.title}
-            </Link>
-          ) : (
-            <p className="mt-3 text-sm leading-6 text-muted">마지막 수업입니다. 로드맵에서 완료율을 확인해보세요.</p>
-          )}
+          <h3 className="text-xl font-black text-ink">학습 탐색</h3>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {previousLesson ? (
+              <Link href={`/learn/${previousLesson.slug}`} className="inline-flex min-h-11 items-center rounded-md border border-line bg-panel px-4 py-2 text-sm font-black text-ink focus:outline-none focus:ring-2 focus:ring-marine">
+                이전 수업: {previousLesson.title}
+              </Link>
+            ) : null}
+            {nextLesson ? (
+              <Link href={`/learn/${nextLesson.slug}`} className="inline-flex min-h-11 items-center rounded-md bg-ink px-4 py-2 text-sm font-black text-white focus:outline-none focus:ring-2 focus:ring-marine">
+                다음 수업: {nextLesson.title}
+              </Link>
+            ) : (
+              <p className="text-sm leading-6 text-muted">마지막 수업입니다. 로드맵에서 완료율을 확인해보세요.</p>
+            )}
+          </div>
+          {relatedLessons.length ? (
+            <div className="mt-5">
+              <p className="text-sm font-black text-forest">관련 수업</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {relatedLessons.map((relatedLesson) => (
+                  <Link key={relatedLesson.slug} href={`/learn/${relatedLesson.slug}`} className="inline-flex min-h-11 items-center rounded-md border border-line bg-panel px-3 py-2 text-sm font-black text-marine focus:outline-none focus:ring-2 focus:ring-marine">
+                    {relatedLesson.title}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </section>
       </article>
     </main>

@@ -25,7 +25,7 @@ export function recommendLessons(lessons: Lesson[], metrics: MetricSnapshot[], c
   const recent = new Set<string>();
   const metricById = new Map(metrics.map((metric) => [metric.metricId, metric]));
 
-  return lessons
+  const recommendations = lessons
     .map((lesson) => {
       const prerequisiteStatus = readCompletionFromSlugs(completedSlugs, lesson);
       const relatedMetrics = lesson.relatedMetricIds.map((id) => metricById.get(id)).filter((metric): metric is MetricSnapshot => metric != null);
@@ -58,6 +58,12 @@ export function recommendLessons(lessons: Lesson[], metrics: MetricSnapshot[], c
         recommendationType: recent.has(lesson.slug) ? "review" : type,
       };
     })
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 4);
+    .sort((a, b) => b.score - a.score);
+
+  const top = recommendations.slice(0, 4);
+  const completedReview = recommendations.find((item) => item.prerequisiteStatus === "completed" && item.recommendationType === "review");
+  if (completedReview && !top.some((item) => item.lessonId === completedReview.lessonId)) {
+    return [...top.slice(0, 3), completedReview];
+  }
+  return top;
 }

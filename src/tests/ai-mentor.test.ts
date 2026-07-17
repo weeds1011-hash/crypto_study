@@ -141,7 +141,7 @@ describe("AI Crypto Mentor answer", () => {
   it("recommends the next lesson and a review quiz", () => {
     const coach = buildStudyCoach(["what-is-money"]);
 
-    expect(coach.nextLesson?.href).toBe("/learn/macro-liquidity");
+    expect(coach.nextLesson?.href).toBe("/learn/store-of-value-medium-unit");
     expect(coach.reviewQuiz.question.length).toBeGreaterThan(0);
   });
 

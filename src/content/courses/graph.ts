@@ -11,27 +11,28 @@ export interface UniversityGraphNode {
 export interface UniversityGraphEdge {
   sourceId: string;
   targetId: string;
-  relation: "prerequisite" | "next" | "lesson_metric" | "metric_news" | "news_coin" | "coin_chain" | "chain_macro" | "glossary";
+  relation: "prerequisite" | "next" | "related_lesson" | "lesson_metric" | "metric_news" | "news_coin" | "coin_chain" | "chain_macro" | "glossary";
 }
 
 export function buildUniversityKnowledgeGraph(lessons: UniversityLesson[] = universityLessons) {
-  const lessonNodes = lessons.map<UniversityGraphNode>((item) => ({ id: item.id, type: "lesson", label: item.title }));
+  const lessonNodes = lessons.map<UniversityGraphNode>((item) => ({ id: item.slug, type: "lesson", label: item.title }));
   const layeredEdges = lessons.flatMap<UniversityGraphEdge>((item) => [
-    ...item.prerequisiteLessons.map((id) => ({ sourceId: id, targetId: item.id, relation: "prerequisite" as const })),
-    ...(item.nextLesson ? [{ sourceId: item.id, targetId: item.nextLesson, relation: "next" as const }] : []),
-    ...item.relatedMetrics.map((id) => ({ sourceId: item.id, targetId: id, relation: "lesson_metric" as const })),
-    ...item.relatedMetrics.flatMap((metricId) => item.relatedNews.map((newsId) => ({ sourceId: metricId, targetId: newsId, relation: "metric_news" as const }))),
-    ...item.relatedNews.flatMap((newsId) => item.relatedCoins.map((coinId) => ({ sourceId: newsId, targetId: coinId, relation: "news_coin" as const }))),
+    ...item.prerequisites.map((id) => ({ sourceId: id, targetId: item.slug, relation: "prerequisite" as const })),
+    ...(item.nextLesson ? [{ sourceId: item.slug, targetId: item.nextLesson, relation: "next" as const }] : []),
+    ...item.relatedLessons.map((id) => ({ sourceId: item.slug, targetId: id, relation: "related_lesson" as const })),
+    ...item.relatedMetrics.map((id) => ({ sourceId: item.slug, targetId: id, relation: "lesson_metric" as const })),
+    ...item.relatedMetrics.flatMap((metricId) => item.relatedNewsTopics.map((newsId) => ({ sourceId: metricId, targetId: newsId, relation: "metric_news" as const }))),
+    ...item.relatedNewsTopics.flatMap((newsId) => item.relatedCoins.map((coinId) => ({ sourceId: newsId, targetId: coinId, relation: "news_coin" as const }))),
     ...item.relatedCoins.flatMap((coinId) => item.relatedChains.map((chainId) => ({ sourceId: coinId, targetId: chainId, relation: "coin_chain" as const }))),
     ...item.relatedChains.flatMap((chainId) => item.relatedMacroFactors.map((macroId) => ({ sourceId: chainId, targetId: macroId, relation: "chain_macro" as const }))),
-    ...item.glossaryTerms.map((id) => ({ sourceId: item.id, targetId: id, relation: "glossary" as const })),
+    ...item.glossaryTerms.map((id) => ({ sourceId: item.slug, targetId: id, relation: "glossary" as const })),
   ]);
 
   return {
     nodes: [
       ...lessonNodes,
       ...uniqueNodes(lessons.flatMap((item) => item.relatedMetrics), "metric"),
-      ...uniqueNodes(lessons.flatMap((item) => item.relatedNews), "news"),
+      ...uniqueNodes(lessons.flatMap((item) => item.relatedNewsTopics), "news"),
       ...uniqueNodes(lessons.flatMap((item) => item.relatedCoins), "coin"),
       ...uniqueNodes(lessons.flatMap((item) => item.relatedChains), "chain"),
       ...uniqueNodes(lessons.flatMap((item) => item.relatedMacroFactors), "macro"),
@@ -42,48 +43,59 @@ export function buildUniversityKnowledgeGraph(lessons: UniversityLesson[] = univ
 }
 
 export function validateUniversitySchema(lessons: UniversityLesson[] = universityLessons) {
-  const ids = new Set(lessons.map((item) => item.id));
+  const ids = new Set(lessons.map((item) => item.slug));
   const courseIds = new Set(courses.map((course) => course.id));
+  const courseLessonIds = new Set(courses.flatMap((course) => course.lessonIds));
   return lessons.every((item) => (
-    item.id.length > 0 &&
+    item.id === item.slug &&
+    item.slug.length > 0 &&
     item.title.length > 0 &&
-    item.oneLineSummary.length > 0 &&
+    item.shortSummary.length > 0 &&
+    item.oneLineSummary === item.shortSummary &&
+    item.learningObjectives.length > 0 &&
+    item.explanation.length > 0 &&
     item.whyItMatters.length > 0 &&
     item.moneyFlowPosition.length > 0 &&
-    item.currentMarketConnection.length > 0 &&
-    Array.isArray(item.prerequisiteLessons) &&
-    Array.isArray(item.relatedMetrics) &&
-    Array.isArray(item.relatedNews) &&
-    Array.isArray(item.relatedNewsTags) &&
-    Array.isArray(item.relatedCoins) &&
-    Array.isArray(item.relatedChains) &&
-    Array.isArray(item.relatedMacroFactors) &&
-    Array.isArray(item.glossaryTerms) &&
-    Array.isArray(item.aiMentorQuestions) &&
+    item.marketConnection.length > 0 &&
+    item.currentMarketConnection === item.marketConnection &&
+    item.relatedMetrics.length > 0 &&
+    item.relatedCoins.length > 0 &&
+    item.relatedNewsTopics.length > 0 &&
+    item.relatedNewsTags.length > 0 &&
+    item.relatedChains.length > 0 &&
+    item.relatedMacroFactors.length > 0 &&
+    item.aiMentorPrompts.length > 0 &&
     item.aiMentorQuestions.length > 0 &&
-    item.quiz.length > 0 &&
+    item.relatedLessons.every((id) => ids.has(id)) &&
+    item.prerequisites.every((id) => ids.has(id)) &&
+    item.prerequisiteLessons.every((id) => ids.has(id)) &&
+    (item.previousLesson == null || ids.has(item.previousLesson)) &&
     (item.nextLesson == null || ids.has(item.nextLesson)) &&
-    courseIds.has(item.courseId)
+    item.estimatedReadingTime > 0 &&
+    item.estimatedMinutes === item.estimatedReadingTime &&
+    item.quiz.length > 0 &&
+    courseIds.has(item.courseId) &&
+    courseLessonIds.has(item.slug)
   ));
 }
 
 export function hasPrerequisiteCycle(lessons: UniversityLesson[] = universityLessons) {
   const visiting = new Set<string>();
   const visited = new Set<string>();
-  const byId = new Map(lessons.map((item) => [item.id, item]));
+  const byId = new Map(lessons.map((item) => [item.slug, item]));
 
   function visit(id: string): boolean {
     if (visiting.has(id)) return true;
     if (visited.has(id)) return false;
     visiting.add(id);
     const item = byId.get(id);
-    const cycle = item?.prerequisiteLessons.some(visit) ?? false;
+    const cycle = item?.prerequisites.some(visit) ?? false;
     visiting.delete(id);
     visited.add(id);
     return cycle;
   }
 
-  return lessons.some((item) => visit(item.id));
+  return lessons.some((item) => visit(item.slug));
 }
 
 function uniqueNodes(ids: string[], type: UniversityGraphNodeType) {
