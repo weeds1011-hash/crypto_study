@@ -9,6 +9,33 @@ import { mockMetrics } from "@/features/market-data/mock";
 
 const root = process.cwd();
 const requiredCourseTitles = ["Money Foundations", "Macro Economy", "Money Flow", "Crypto Foundations", "Market Intelligence"];
+const cryptoCoverageTerms = [
+  "암호화폐",
+  "블록체인",
+  "개인키",
+  "시드 문구",
+  "수수료",
+  "채굴",
+  "Proof of Work",
+  "Proof of Stake",
+  "스테이킹",
+  "Layer 1",
+  "Layer 2",
+  "코인",
+  "토큰",
+  "스마트 계약",
+  "스테이블코인",
+  "탈중앙화 거래소",
+  "대출 프로토콜",
+  "오라클",
+  "브릿지",
+  "NFT",
+  "거버넌스 토큰",
+  "밈코인",
+  "프라이버시 코인",
+  "거래소 토큰",
+  "실물자산 토큰",
+];
 
 describe("Money Flow Academy curriculum schema", () => {
   it("defines the required five courses with ordered lesson lists", () => {
@@ -65,7 +92,7 @@ describe("Money Flow Academy curriculum schema", () => {
   it("resolves course and module placement for lesson pages", () => {
     expect(courseForLesson("money-flow")?.title).toBe("Money Flow");
     expect(courseForLesson("stablecoins")?.title).toBe("Crypto Foundations");
-    expect(moduleForLesson("stablecoins")).toEqual({ index: 3, title: "Module 3", total: 4 });
+    expect(moduleForLesson("stablecoins")).toEqual({ index: 5, title: "Module 5", total: 8 });
   });
 
   it("supports previous, next, related lessons, and prerequisites", () => {
@@ -75,6 +102,35 @@ describe("Money Flow Academy curriculum schema", () => {
     expect(lesson?.nextLesson).toBe("exchange-chain-flow");
     expect(lesson?.relatedLessons).toContain("stablecoins");
     expect(lesson?.prerequisites).toContain("money-flow");
+  });
+
+  it("covers the required beginner crypto foundation topics without adding app features", () => {
+    const cryptoLessons = universityLessons.filter((lesson) => lesson.courseId === "crypto-foundations");
+    const cryptoText = cryptoLessons
+      .map((lesson) => [
+        lesson.title,
+        lesson.shortSummary,
+        lesson.explanation,
+        lesson.whyItMatters,
+        lesson.learningObjectives.join(" "),
+        lesson.aiMentorPrompts.join(" "),
+        lesson.quiz.map((quiz) => `${quiz.question} ${quiz.options.join(" ")} ${quiz.explanation}`).join(" "),
+      ].join(" "))
+      .join(" ");
+
+    expect(cryptoLessons.map((lesson) => lesson.slug)).toEqual([
+      "what-is-crypto",
+      "blockchain-wallets",
+      "consensus-transactions",
+      "bitcoin-ethereum",
+      "stablecoins",
+      "crypto-classifications",
+      "protocols-and-applications",
+      "tokenomics",
+    ]);
+    for (const term of cryptoCoverageTerms) {
+      expect(cryptoText).toContain(term);
+    }
   });
 });
 
