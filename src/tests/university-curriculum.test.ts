@@ -1,9 +1,13 @@
+﻿import fs from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { courses, toLegacyLesson, universityLessons } from "@/content/courses/university";
+import { courseForLesson, courses, moduleForLesson, toLegacyLesson, universityLessons } from "@/content/courses/university";
 import { buildUniversityKnowledgeGraph, hasPrerequisiteCycle, validateUniversitySchema } from "@/content/courses/graph";
 import { lessons } from "@/content/lessons/seed";
 import { buildKnowledgeGraph } from "@/features/ai-mentor/knowledge-graph";
 import { mockMetrics } from "@/features/market-data/mock";
+
+const root = process.cwd();
 
 describe("Crypto University curriculum schema", () => {
   it("defines the required four courses", () => {
@@ -43,6 +47,11 @@ describe("Crypto University curriculum schema", () => {
     expect(legacy.relatedMetricIds).toEqual(universityLessons[0].relatedMetrics);
     expect(lessons.length).toBe(universityLessons.length);
   });
+
+  it("resolves course and module placement for lesson pages", () => {
+    expect(courseForLesson("stablecoins")?.title).toBe("Crypto Foundations");
+    expect(moduleForLesson("stablecoins")).toEqual({ index: 3, title: "Module 3", total: 4 });
+  });
 });
 
 describe("Crypto University knowledge graph", () => {
@@ -63,5 +72,25 @@ describe("Crypto University knowledge graph", () => {
     expect(graph.edges.some((edge) => edge.sourceId === "stablecoins" && edge.targetId === "stablecoin_supply")).toBe(true);
     expect(graph.edges.some((edge) => edge.sourceId === "stablecoins" && edge.targetId === "btc")).toBe(true);
     expect(graph.edges.some((edge) => edge.sourceId === "stablecoins" && edge.targetId === "스테이블코인")).toBe(true);
+  });
+});
+
+describe("Crypto University learning flow UX", () => {
+  it("keeps the learn page organized around the phase 6 flow", () => {
+    const source = fs.readFileSync(path.join(root, "src/app/learn/page.tsx"), "utf8");
+
+    expect(source).toContain("Course → Module → Lesson → Quiz → Next Lesson");
+    expect(source).toContain("LearningProgressInline");
+  });
+
+  it("renders lesson pages with breadcrumb, prerequisites, market links, and mobile next navigation", () => {
+    const source = fs.readFileSync(path.join(root, "src/app/learn/[slug]/page.tsx"), "utf8");
+    const flowNav = fs.readFileSync(path.join(root, "src/components/learning/LessonFlowNav.tsx"), "utf8");
+
+    expect(source).toContain("LearningBreadcrumb");
+    expect(source).toContain("PrerequisiteStatus");
+    expect(source).toContain("MarketMetricLinks");
+    expect(flowNav).toContain("fixed inset-x-0 bottom-0");
+    expect(flowNav).toContain("min-h-11");
   });
 });

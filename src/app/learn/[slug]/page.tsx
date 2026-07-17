@@ -1,9 +1,14 @@
 ﻿import Link from "next/link";
 import { notFound } from "next/navigation";
 import { GlossaryText } from "@/components/learning/GlossaryText";
+import { LearningBreadcrumb } from "@/components/learning/LearningBreadcrumb";
+import { LearningProgressInline } from "@/components/learning/LearningProgressInline";
+import { LessonFlowNav } from "@/components/learning/LessonFlowNav";
 import { MarketMetricLinks } from "@/components/learning/MarketMetricLinks";
+import { PrerequisiteStatus } from "@/components/learning/PrerequisiteStatus";
 import { QuizBox } from "@/components/learning/QuizBox";
 import { UserNotes } from "@/components/notes/UserNotes";
+import { courseForLesson, moduleForLesson } from "@/content/courses/university";
 import { glossaryTerms } from "@/content/glossary/seed";
 import { lessons } from "@/content/lessons/seed";
 import { getDashboardData } from "@/features/market-data/service";
@@ -20,12 +25,19 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
   const dashboard = await getDashboardData();
   const relatedMetrics = dashboard.metrics.filter((metric) => lesson.relatedMetricIds.includes(metric.metricId));
   const nextLesson = lesson.nextLessons[0] ? lessons.find((item) => item.slug === lesson.nextLessons[0]) : null;
+  const course = courseForLesson(lesson.slug);
+  const moduleInfo = moduleForLesson(lesson.slug);
+  const moduleTitle = moduleInfo ? `${moduleInfo.title} / ${moduleInfo.total}` : undefined;
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10">
-      <Link href="/learn" className="text-sm font-black text-marine">
+    <main className="mx-auto max-w-5xl px-4 py-10 pb-24 md:pb-10">
+      <LearningBreadcrumb course={course} moduleTitle={moduleTitle} lessonTitle={lesson.title} />
+      <Link href="/learn" className="mt-4 inline-flex text-sm font-black text-marine focus:outline-none focus:ring-2 focus:ring-marine">
         학습 로드맵으로 돌아가기
       </Link>
+      <div className="mt-5">
+        <LearningProgressInline lessons={lessons} />
+      </div>
       <article className="mt-5 rounded-lg border border-line bg-panel p-6 shadow-sm">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
@@ -37,6 +49,9 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
             {lesson.estimatedMinutes}분 · {lesson.difficulty}
           </div>
         </div>
+
+        <LessonFlowNav course={course} moduleTitle={moduleTitle} lesson={lesson} nextLesson={nextLesson} />
+        <PrerequisiteStatus prerequisites={lesson.prerequisites} lessons={lessons} />
 
         <Section title="30초 요약" body={lesson.simpleExplanation} />
         <Section title="쉬운 비유" body={lesson.analogy} />
@@ -56,7 +71,7 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
         <section className="mt-8 rounded-md border border-line bg-paper p-5">
           <h3 className="text-xl font-black text-ink">다음 학습</h3>
           {nextLesson ? (
-            <Link href={`/learn/${nextLesson.slug}`} className="mt-3 inline-flex rounded-md bg-ink px-4 py-2 text-sm font-black text-white">
+            <Link href={`/learn/${nextLesson.slug}`} className="mt-3 inline-flex min-h-11 items-center rounded-md bg-ink px-4 py-2 text-sm font-black text-white focus:outline-none focus:ring-2 focus:ring-marine">
               {nextLesson.title}
             </Link>
           ) : (

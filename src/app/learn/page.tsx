@@ -1,4 +1,5 @@
-﻿import { LearningRoadmap } from "@/components/learning/LearningRoadmap";
+﻿import { LearningProgressInline } from "@/components/learning/LearningProgressInline";
+import { LearningRoadmap } from "@/components/learning/LearningRoadmap";
 import { LessonRail } from "@/components/learning/LessonRail";
 import { lessons } from "@/content/lessons/seed";
 
@@ -13,6 +14,14 @@ export default function LearnPage() {
         </p>
       </section>
       <div className="space-y-8">
+        <LearningProgressInline lessons={lessons} />
+        <section className="rounded-lg border border-line bg-panel p-5 shadow-sm" aria-label="학습 흐름 안내">
+          <p className="text-xs font-black uppercase text-forest">Flow</p>
+          <h2 className="mt-1 text-2xl font-black text-ink">Course → Module → Lesson → Quiz → Next Lesson</h2>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-muted">
+            각 수업은 선수 학습 상태, 관련 시장 지표, 퀴즈, 다음 수업으로 이어집니다. 모바일에서는 수업 상세 하단의 다음 수업 버튼으로 한 손 탐색을 이어갈 수 있습니다.
+          </p>
+        </section>
         <LearningRoadmap lessons={lessons} />
         <section>
           <div className="mb-4">

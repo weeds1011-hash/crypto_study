@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -66,7 +66,7 @@ export function LearningRoadmap({ lessons }: { lessons: Lesson[] }) {
               </p>
               <span className="mt-3 inline-flex rounded-md border border-line bg-panel px-2 py-1 text-xs font-black text-ink">{stage.status}</span>
               {firstLesson ? (
-                <Link href={`/learn/${firstLesson.slug}`} className="mt-3 block text-sm font-black text-marine">
+                <Link href={`/learn/${firstLesson.slug}`} className="mt-3 block min-h-11 text-sm font-black text-marine focus:outline-none focus:ring-2 focus:ring-marine">
                   이 단계 시작
                 </Link>
               ) : null}
