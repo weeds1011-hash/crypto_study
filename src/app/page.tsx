@@ -48,10 +48,10 @@ export default async function HomePage() {
             {brandConfig.productName}
           </span>
           <h2 className="mt-5 max-w-4xl text-4xl font-black leading-[1.08] tracking-normal text-ink md:text-6xl">
-            오늘 시장은 어떤 상태일까?
+            오늘 돈은 어디로 움직이고 있는가?
           </h2>
           <p className="mt-4 max-w-2xl text-lg font-black leading-8 text-ink">
-            돈은 지금 어디로 이동하고 있고, 오늘 무엇을 공부하면 좋을까요?
+            시장 상태보다 먼저 돈의 이동 경로를 보고, 오늘 무엇을 공부하면 좋을지 연결합니다.
           </p>
           <p className="mt-4 max-w-2xl text-base leading-7 text-muted">
             {brandConfig.tagline} 이 화면은 가격을 맞히는 도구가 아니라, 시장 상태와 데이터 신뢰도와 학습 주제를 함께 보는 학습용 대시보드입니다.
@@ -91,21 +91,13 @@ export default async function HomePage() {
         </aside>
       </section>
 
-      <section className="py-6">
-        <MarketBriefCard brief={brief} />
-      </section>
-
-      <section className="py-6">
-        <AIMentorPanel metrics={dashboard.metrics} news={news.items} />
-      </section>
-
       <section id="flow" className="space-y-5 py-10">
         <MoneyJourney />
         <div>
           <div className="mb-5 grid gap-3 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
             <div>
               <p className="text-xs font-black uppercase text-forest">Money Flow Engine</p>
-              <h2 className="text-3xl font-black text-ink md:text-4xl">돈의 흐름 지도</h2>
+              <h2 className="text-3xl font-black text-ink md:text-4xl">오늘 돈은 어디로 움직이고 있는가?</h2>
             </div>
             <p className="rounded-lg border border-line bg-panel p-4 text-sm font-bold leading-6 text-muted">
               {marketSummary.text}
@@ -113,6 +105,14 @@ export default async function HomePage() {
           </div>
           <MiniFlowMap signals={dashboard.flowSignals} />
         </div>
+      </section>
+
+      <section className="py-6">
+        <MarketBriefCard brief={brief} />
+      </section>
+
+      <section className="py-6">
+        <AIMentorPanel metrics={dashboard.metrics} news={news.items} />
       </section>
 
       <section className="grid gap-5 py-10 lg:grid-cols-[1.2fr_0.8fr]">

@@ -46,7 +46,7 @@ export function LearningRoadmap({ lessons }: { lessons: Lesson[] }) {
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-xs font-black uppercase text-forest">Roadmap</p>
-          <h2 className="mt-1 text-3xl font-black text-ink">Crypto University 4개 코스</h2>
+          <h2 className="mt-1 text-3xl font-black text-ink">Money Flow Academy 5개 코스</h2>
         </div>
         <p className="text-sm font-bold text-muted">잠금은 추천 순서 표시이며, 수업은 언제든 열 수 있습니다.</p>
       </div>
