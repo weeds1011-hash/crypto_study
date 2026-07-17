@@ -104,6 +104,24 @@ describe("Money Flow Academy curriculum schema", () => {
     expect(lesson?.prerequisites).toContain("money-flow");
   });
 
+  it("keeps the full beginner journey in one natural sequence across courses", () => {
+    const first = universityLessons.find((lesson) => lesson.previousLesson == null);
+    const visited: string[] = [];
+    let current = first;
+
+    while (current) {
+      visited.push(current.slug);
+      current = current.nextLesson ? universityLessonsById.get(current.nextLesson) : undefined;
+    }
+
+    expect(visited).toEqual(courses.flatMap((course) => course.lessonIds));
+    for (const lesson of universityLessons) {
+      if (lesson.nextLesson) {
+        expect(universityLessonsById.get(lesson.nextLesson)?.previousLesson).toBe(lesson.slug);
+      }
+    }
+  });
+
   it("covers the required beginner crypto foundation topics without adding app features", () => {
     const cryptoLessons = universityLessons.filter((lesson) => lesson.courseId === "crypto-foundations");
     const cryptoText = cryptoLessons
@@ -162,6 +180,16 @@ describe("Money Flow Academy knowledge graph", () => {
     expect(stablecoinEdges.some((edge) => edge.relation === "prerequisite")).toBe(true);
     expect(stablecoinEdges.some((edge) => edge.relation === "related_lesson")).toBe(true);
     expect(stablecoinEdges.some((edge) => edge.relation === "glossary" && edge.targetId === "스테이블코인")).toBe(true);
+  });
+
+  it("does not create meaningless coin-to-chain references", () => {
+    const graph = buildUniversityKnowledgeGraph(universityLessons);
+
+    expect(graph.edges.some((edge) => edge.sourceId === "btc" && edge.targetId === "ethereum" && edge.relation === "coin_chain")).toBe(false);
+    expect(graph.edges.some((edge) => edge.sourceId === "eth" && edge.targetId === "bitcoin" && edge.relation === "coin_chain")).toBe(false);
+    expect(graph.edges.some((edge) => edge.sourceId === "sol" && edge.targetId === "ethereum" && edge.relation === "coin_chain")).toBe(false);
+    expect(graph.edges.some((edge) => edge.sourceId === "btc" && edge.targetId === "bitcoin" && edge.relation === "coin_chain")).toBe(true);
+    expect(graph.edges.some((edge) => edge.sourceId === "eth" && edge.targetId === "ethereum" && edge.relation === "coin_chain")).toBe(true);
   });
 
   it("exposes academy links through the mentor graph compatibility layer", () => {

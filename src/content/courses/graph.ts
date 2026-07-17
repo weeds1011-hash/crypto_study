@@ -23,7 +23,7 @@ export function buildUniversityKnowledgeGraph(lessons: UniversityLesson[] = univ
     ...item.relatedMetrics.map((id) => ({ sourceId: item.slug, targetId: id, relation: "lesson_metric" as const })),
     ...item.relatedMetrics.flatMap((metricId) => item.relatedNewsTopics.map((newsId) => ({ sourceId: metricId, targetId: newsId, relation: "metric_news" as const }))),
     ...item.relatedNewsTopics.flatMap((newsId) => item.relatedCoins.map((coinId) => ({ sourceId: newsId, targetId: coinId, relation: "news_coin" as const }))),
-    ...item.relatedCoins.flatMap((coinId) => item.relatedChains.map((chainId) => ({ sourceId: coinId, targetId: chainId, relation: "coin_chain" as const }))),
+    ...item.relatedCoins.flatMap((coinId) => meaningfulCoinChainEdges(coinId, item.relatedChains)),
     ...item.relatedChains.flatMap((chainId) => item.relatedMacroFactors.map((macroId) => ({ sourceId: chainId, targetId: macroId, relation: "chain_macro" as const }))),
     ...item.glossaryTerms.map((id) => ({ sourceId: item.slug, targetId: id, relation: "glossary" as const })),
   ]);
@@ -110,4 +110,29 @@ function dedupeEdges(edges: UniversityGraphEdge[]) {
     seen.add(key);
     return true;
   });
+}
+
+const assetChainMap: Record<string, string[]> = {
+  btc: ["bitcoin"],
+  eth: ["ethereum"],
+  sol: ["solana"],
+  ada: ["cardano"],
+  avax: ["avalanche"],
+  xrp: ["xrp-ledger"],
+  matic: ["polygon"],
+  arb: ["arbitrum"],
+  op: ["optimism"],
+  usdc: ["ethereum"],
+  usdt: ["ethereum"],
+  uni: ["ethereum"],
+  aave: ["ethereum"],
+  link: ["ethereum"],
+  maker: ["ethereum"],
+};
+
+function meaningfulCoinChainEdges(coinId: string, lessonChains: string[]): UniversityGraphEdge[] {
+  const chains = assetChainMap[coinId] ?? [];
+  return chains
+    .filter((chainId) => lessonChains.includes(chainId))
+    .map((chainId) => ({ sourceId: coinId, targetId: chainId, relation: "coin_chain" as const }));
 }
