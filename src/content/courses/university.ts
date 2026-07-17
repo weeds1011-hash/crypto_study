@@ -486,9 +486,6 @@ const lessonInputs: LessonInput[] = [
   },
 ];
 
-export const universityLessons: UniversityLesson[] = lessonInputs.map(lesson);
-export const universityLessonsById = new Map(universityLessons.map((item) => [item.id, item]));
-
 export function courseForLesson(lessonId: string) {
   const item = universityLessonsById.get(lessonId);
   return item ? courses.find((course) => course.id === item.courseId) : undefined;
@@ -515,12 +512,12 @@ export function toLegacyLesson(item: UniversityLesson): Lesson {
     summary: item.shortSummary,
     simpleExplanation: item.shortSummary,
     analogy: item.moneyFlowPosition,
-    detailedExplanation: `${item.explanation} ${item.whyItMatters} ${item.marketConnection} 다만 하나의 지표나 뉴스만으로 시장 방향을 확정하지는 않습니다.`,
+    detailedExplanation: `먼저 핵심 개념부터 봅니다. ${item.explanation} 다음으로 왜 중요한지 연결합니다. ${item.whyItMatters} 마지막으로 현재 시장과 연결합니다. ${item.marketConnection} 다만 하나의 지표나 뉴스만으로 시장 방향을 확정하지는 않습니다.`,
     whyItMatters: item.whyItMatters,
     examples: [
       { title: "학습 목표", description: item.learningObjectives.join(" / ") },
       { title: "돈의 흐름에서 위치", description: item.moneyFlowPosition },
-      { title: "현재 시장 연결", description: item.marketConnection },
+      { title: "다음 학습으로 연결", description: item.nextLesson ? `이 수업은 다음 수업인 ${universityLessonsById.get(item.nextLesson)?.title ?? item.nextLesson}로 이어집니다.` : "이 수업은 전체 시장 해석을 마무리하는 마지막 단계입니다." },
       { title: "AI Mentor 질문", description: item.aiMentorPrompts.join(" / ") },
     ],
     misconceptions: ["하나의 뉴스나 지표만으로 가격 방향을 확정할 수 없습니다."],
@@ -546,13 +543,117 @@ function lesson(input: LessonInput): UniversityLesson {
     aiMentorQuestions: input.aiMentorPrompts,
     prerequisiteLessons: input.prerequisites,
     estimatedMinutes: input.estimatedReadingTime,
-    quiz: [
-      {
-        question: `${input.title}를 볼 때 가장 안전한 태도는 무엇일까요?`,
-        options: ["근거와 한계를 함께 본다", "가격 방향을 바로 확정한다", "데이터가 없으면 0으로 본다", "뉴스 하나만 믿는다"],
-        answerIndex: 0,
-        explanation: "학습 시스템은 연결된 지표, 뉴스, 용어, 한계를 함께 보도록 설계되어 있습니다.",
-      },
-    ],
+    quiz: [quizBySlug[input.slug] ?? defaultQuiz(input.title)],
   };
 }
+
+function defaultQuiz(title: string): QuizQuestion {
+  return {
+    question: `${title}를 공부할 때 가장 안전한 태도는 무엇일까요?`,
+    options: ["근거와 한계를 함께 본다", "가격 방향을 바로 확정한다", "데이터가 없으면 0으로 본다", "뉴스 하나만 믿는다"],
+    answerIndex: 0,
+    explanation: "학습 시스템은 연결된 지표, 뉴스, 용어, 한계를 함께 보도록 설계되어 있습니다.",
+  };
+}
+
+const quizBySlug: Record<string, QuizQuestion> = {
+  "what-is-money": {
+    question: "이 수업에서 말하는 돈의 가장 중요한 특징은 무엇인가요?",
+    options: ["사람들이 함께 믿고 쓰는 약속이라는 점", "가격이 항상 오르는 자산이라는 점", "암호화폐와 완전히 같은 것이라는 점", "정부가 없어도 항상 안정적이라는 점"],
+    answerIndex: 0,
+    explanation: "돈은 사람들이 받아들인다는 믿음 위에서 작동합니다. 그래서 돈의 흐름을 보려면 먼저 그 약속이 어디에 머무는지 봐야 합니다.",
+  },
+  "store-of-value-medium-unit": {
+    question: "스테이블코인이 시장 안에서 자주 맡는 역할에 가장 가까운 것은 무엇인가요?",
+    options: ["거래하거나 대기하는 현금성 통로", "항상 가치가 오르는 성장 자산", "채굴 보상을 주는 전용 장비", "모든 체인의 거래 수수료"],
+    answerIndex: 0,
+    explanation: "스테이블코인은 시장 안에서 달러처럼 대기하거나 이동하는 통로로 자주 쓰입니다.",
+  },
+  "liquidity-basics": {
+    question: "유동성을 가장 쉽게 설명한 문장은 무엇인가요?",
+    options: ["돈이나 자산이 얼마나 쉽게 움직일 수 있는지", "코인의 이름이 얼마나 유명한지", "뉴스가 몇 개나 나왔는지", "가격이 하루에 반드시 오르는 정도"],
+    answerIndex: 0,
+    explanation: "유동성은 움직임의 쉬움과 관련됩니다. 시장에 돈과 거래 상대가 많을수록 자산이 더 쉽게 움직일 수 있습니다.",
+  },
+  "interest-rates": {
+    question: "금리가 높을 때 위험자산에 부담이 될 수 있는 이유는 무엇인가요?",
+    options: ["안전한 곳에 머물러도 받을 수 있는 보상이 커지기 때문", "모든 코인의 공급량이 자동으로 줄어들기 때문", "블록체인이 멈추기 때문", "뉴스가 모두 사라지기 때문"],
+    answerIndex: 0,
+    explanation: "금리가 높으면 안전한 선택지도 매력적입니다. 그래서 위험자산으로 돈이 이동하려면 더 강한 이유가 필요합니다.",
+  },
+  "dollar-liquidity": {
+    question: "스테이블코인 공급이 늘어도 바로 매수세라고 단정하면 안 되는 이유는 무엇인가요?",
+    options: ["달러 환경과 실제 이동 경로를 함께 확인해야 하기 때문", "스테이블코인은 항상 가치가 0이 되기 때문", "BTC 도미넌스와 전혀 관련이 없기 때문", "금리는 암호화폐와 절대 관련이 없기 때문"],
+    answerIndex: 0,
+    explanation: "스테이블코인은 대기 자금의 단서일 수 있지만, 그 돈이 실제로 어디로 움직이는지 추가 확인이 필요합니다.",
+  },
+  "risk-assets": {
+    question: "위험자산 선호가 강해졌다는 말에 가장 가까운 설명은 무엇인가요?",
+    options: ["사람들이 더 큰 변동성을 감수하고 수익 기회를 찾는 상태", "모든 투자자가 현금만 보유하는 상태", "뉴스를 전혀 보지 않는 상태", "블록체인의 거래가 모두 사라지는 상태"],
+    answerIndex: 0,
+    explanation: "위험자산 선호는 돈이 안전한 곳에서 더 변동성이 큰 자산으로 움직일 수 있는 분위기를 뜻합니다.",
+  },
+  "money-flow": {
+    question: "돈의 흐름을 읽을 때 가장 좋은 태도는 무엇인가요?",
+    options: ["여러 구간의 신호를 나누어 보고 강한 곳과 약한 곳을 구분한다", "가격이 오른 코인 하나만 보고 결론낸다", "데이터가 없으면 0으로 처리한다", "뉴스 제목만 보고 방향을 확정한다"],
+    answerIndex: 0,
+    explanation: "돈의 흐름은 여러 구간으로 나누어 봐야 합니다. 한 지표만으로 전체 방향을 확정하면 오해하기 쉽습니다.",
+  },
+  "stablecoin-pipeline": {
+    question: "스테이블코인 공급 증가를 해석할 때 가장 중요한 추가 확인은 무엇인가요?",
+    options: ["그 자금이 거래소, 체인, DeFi 중 어디로 이동하는지", "코인 이름이 얼마나 짧은지", "차트 색상이 무엇인지", "모든 뉴스가 긍정적인지"],
+    answerIndex: 0,
+    explanation: "공급 증가는 대기 자금의 단서일 수 있지만, 실제 해석은 그 자금이 어디로 움직이는지와 함께 봐야 합니다.",
+  },
+  "exchange-chain-flow": {
+    question: "거래소 유입이나 체인 활동을 볼 때 피해야 할 해석은 무엇인가요?",
+    options: ["하나의 이동을 무조건 매수나 매도로 단정하는 것", "여러 가능성을 함께 보는 것", "관련 뉴스와 지표를 확인하는 것", "데이터 상태를 확인하는 것"],
+    answerIndex: 0,
+    explanation: "자금 이동에는 여러 이유가 있을 수 있습니다. 거래소와 체인 데이터는 방향을 단정하기보다 가능성을 좁히는 자료로 봐야 합니다.",
+  },
+  "what-is-crypto": {
+    question: "암호화폐를 이해할 때 가장 먼저 구분해야 하는 것은 무엇인가요?",
+    options: ["각 코인이 어떤 목적과 역할을 갖는지", "로고 색상이 무엇인지", "가격이 어제보다 올랐는지만", "거래소 이름이 얼마나 유명한지"],
+    answerIndex: 0,
+    explanation: "코인마다 목적이 다릅니다. 목적을 알아야 돈이 왜 그 자산으로 이동하는지 해석할 수 있습니다.",
+  },
+  "bitcoin-ethereum": {
+    question: "이 수업에서 설명한 BTC와 ETH의 차이에 가장 가까운 것은 무엇인가요?",
+    options: ["BTC는 가치 저장 이야기, ETH는 앱과 스마트 계약 생태계와 가깝다", "둘은 완전히 같은 역할만 한다", "ETH는 블록체인과 관련이 없다", "BTC는 DeFi 앱 실행만을 위해 만들어졌다"],
+    answerIndex: 0,
+    explanation: "BTC와 ETH는 모두 암호화폐지만 돈이 머무는 이유와 시장에서 보는 역할이 다를 수 있습니다.",
+  },
+  stablecoins: {
+    question: "스테이블코인을 해석할 때 가장 조심해야 할 점은 무엇인가요?",
+    options: ["공급량만 보고 바로 매수세라고 단정하지 않는 것", "항상 가격이 크게 오른다고 믿는 것", "준비금과 디페깅 위험을 보지 않는 것", "시장 유동성과 완전히 무관하다고 보는 것"],
+    answerIndex: 0,
+    explanation: "스테이블코인 공급은 중요한 단서지만, 실제 자금 이동과 위험을 함께 확인해야 합니다.",
+  },
+  tokenomics: {
+    question: "토큰 경제학에서 함께 봐야 하는 요소로 가장 알맞은 것은 무엇인가요?",
+    options: ["발행량, 유통량, 락업, 보상 구조", "로고 디자인과 이름 길이", "하루 동안의 검색량만", "거래소 앱의 색상"],
+    answerIndex: 0,
+    explanation: "토큰 가격은 돈의 유입뿐 아니라 공급 구조의 영향을 받습니다. 그래서 발행량과 유통량 같은 요소를 함께 봐야 합니다.",
+  },
+  tvl: {
+    question: "TVL이 늘었을 때 바로 확인해야 할 것은 무엇인가요?",
+    options: ["실제 예치가 늘었는지, 자산 가격 상승 효과인지", "모든 DeFi가 안전해졌는지", "금리가 사라졌는지", "비트코인 공급량이 늘었는지"],
+    answerIndex: 0,
+    explanation: "TVL은 자산 가격 변화만으로도 늘 수 있습니다. 실제 자금 유입인지 확인해야 더 안전하게 해석할 수 있습니다.",
+  },
+  "onchain-risk": {
+    question: "온체인 데이터를 볼 때 가장 조심해야 할 해석은 무엇인가요?",
+    options: ["활성 주소를 곧바로 실제 사용자 수로 단정하는 것", "데이터 출처를 확인하는 것", "관련 뉴스와 함께 보는 것", "한계를 표시하는 것"],
+    answerIndex: 0,
+    explanation: "한 사람이 여러 주소를 쓸 수 있고 내부 이동도 있을 수 있습니다. 그래서 활성 주소를 바로 사용자 수로 단정하면 위험합니다.",
+  },
+  "market-synthesis": {
+    question: "시장 해석을 종합할 때 가장 안전한 방식은 무엇인가요?",
+    options: ["근거, 반대 신호, 모르는 부분을 함께 정리한다", "가장 마음에 드는 지표 하나만 고른다", "가격 예측을 확정적으로 말한다", "데이터 상태는 보지 않는다"],
+    answerIndex: 0,
+    explanation: "학습용 시장 해석은 확정 예측이 아니라 근거와 한계를 함께 정리하는 과정입니다.",
+  },
+};
+
+export const universityLessons: UniversityLesson[] = lessonInputs.map(lesson);
+export const universityLessonsById = new Map(universityLessons.map((item) => [item.id, item]));
