@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useState } from "react";
@@ -13,7 +13,7 @@ export function SiteHeader() {
         <div className="flex items-center justify-between gap-3">
           <Link href="/" className="min-w-0">
             <p className="text-xs font-black uppercase text-forest">Crypto Study</p>
-            <h1 className="text-xl font-black tracking-normal text-ink md:text-2xl">암호화폐 돈의 흐름 대시보드</h1>
+            <h1 className="text-xl font-black tracking-normal text-ink md:text-2xl">암호화폐 분류와 돈의 흐름</h1>
           </Link>
           <button
             type="button"

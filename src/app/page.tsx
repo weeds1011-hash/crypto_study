@@ -1,177 +1,186 @@
-﻿import { AIMentorPanel } from "@/components/ai-mentor/AIMentorPanel";
-import { DailyQuestionCard } from "@/components/dashboard/DailyQuestionCard";
-import { LessonRecommendations } from "@/components/dashboard/LessonRecommendations";
-import { MarketBriefCard } from "@/components/dashboard/MarketBriefCard";
-import { MetricCard } from "@/components/dashboard/MetricCard";
-import { MoneyJourney } from "@/components/dashboard/MoneyJourney";
-import { NewsConnectionPanel } from "@/components/dashboard/NewsConnectionPanel";
-import { MiniFlowMap } from "@/components/flow-map/MiniFlowMap";
-import { LearningProgress } from "@/components/learning/LearningProgress";
-import { LessonRail } from "@/components/learning/LessonRail";
-import { UserNotes } from "@/components/notes/UserNotes";
-import { brandConfig } from "@/config/brand";
-import { lessons } from "@/content/lessons/seed";
-import { selectDailyQuestion } from "@/features/daily-question/questions";
-import { recommendLessons } from "@/features/lesson-recommendations/recommendations";
-import { getMarketBrief } from "@/features/market-brief/market-brief.service";
-import { getDashboardData } from "@/features/market-data/service";
-import { metricById, pickStudyRecommendation, summarizeMarket } from "@/lib/dashboard/insights";
-import { getLatestNews } from "@/server/services/news-service";
+﻿import {
+  classificationRules,
+  cryptoCategories,
+  economicRelationships,
+  learningFlow,
+  type CryptoCategory,
+} from "@/content/crypto-dashboard";
 
-const modeLabel = {
-  mock: "샘플 데이터",
-  mixed: "혼합 데이터",
-  live: "실데이터",
-};
-
-export default async function HomePage() {
-  const dashboard = await getDashboardData();
-  const marketSummary = summarizeMarket(dashboard.flowSignals);
-  const study = pickStudyRecommendation(dashboard.metrics, dashboard.flowSignals);
-  const brief = await getMarketBrief(dashboard.metrics, dashboard.flowSignals, lessons);
-  const dailyQuestion = selectDailyQuestion(dashboard.metrics, lessons);
-  const recommendations = recommendLessons(lessons, dashboard.metrics);
-  const news = await getLatestNews(4);
-  const marketCap = metricById(dashboard.metrics, "crypto_market_cap");
-  const midMetrics = ["btc_dominance", "stablecoin_supply", "defi_tvl"]
-    .map((id) => metricById(dashboard.metrics, id))
-    .filter((metric): metric is NonNullable<typeof metric> => metric != null);
-  const supportMetrics = ["global_liquidity", "fed_rate"]
-    .map((id) => metricById(dashboard.metrics, id))
-    .filter((metric): metric is NonNullable<typeof metric> => metric != null);
-
+export default function HomePage() {
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 md:py-12">
-      <section className="grid min-h-[560px] items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+      <section className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
         <div>
-          <span className="inline-flex rounded-md border border-line bg-panel px-3 py-2 text-sm font-black text-marine">
-            {brandConfig.productName}
-          </span>
-          <h2 className="mt-5 max-w-4xl text-4xl font-black leading-[1.08] tracking-normal text-ink md:text-6xl">
-            오늘 돈은 어디로 움직이고 있는가?
-          </h2>
-          <p className="mt-4 max-w-2xl text-lg font-black leading-8 text-ink">
-            시장 상태보다 먼저 돈의 이동 경로를 보고, 오늘 무엇을 공부하면 좋을지 연결합니다.
+          <p className="inline-flex rounded-md border border-line bg-panel px-3 py-2 text-sm font-black text-forest">
+            Crypto Category Dashboard
           </p>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-muted">
-            {brandConfig.tagline} 이 화면은 가격을 맞히는 도구가 아니라, 시장 상태와 데이터 신뢰도와 학습 주제를 함께 보는 학습용 대시보드입니다.
+          <h2 className="mt-5 max-w-4xl text-4xl font-black leading-[1.08] text-ink md:text-6xl">
+            암호화폐 종류와 돈의 흐름을 한눈에 공부합니다.
+          </h2>
+          <p className="mt-5 max-w-2xl text-lg font-bold leading-8 text-muted">
+            먼저 암호화폐를 역할별로 나누고, 그 다음 금리·달러·유동성·경기와 어떤 관계가 있는지 초보자 기준으로 연결합니다.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <a href="#flow" className="rounded-md bg-ink px-5 py-3 font-black text-white focus:outline-none focus:ring-2 focus:ring-marine">
-              돈의 흐름 보기
+            <a href="#categories" className="rounded-md bg-ink px-5 py-3 font-black text-white focus:outline-none focus:ring-2 focus:ring-marine">
+              종류부터 보기
             </a>
-            <a href="#learn" className="rounded-md border border-line bg-panel px-5 py-3 font-black text-ink focus:outline-none focus:ring-2 focus:ring-marine">
-              오늘 공부 시작
+            <a href="#economy" className="rounded-md border border-line bg-panel px-5 py-3 font-black text-ink focus:outline-none focus:ring-2 focus:ring-marine">
+              경제와 연결 보기
             </a>
           </div>
         </div>
-        <aside className="rounded-lg border border-line bg-panel p-5 shadow-calm" aria-label="오늘의 요약 상태">
-          <p className="text-xs font-black uppercase text-forest">Today Brief</p>
-          <h3 className="mt-2 text-3xl font-black text-ink">한눈에 보는 오늘</h3>
-          <div className="mt-6 grid gap-3">
-            <SummaryTile label="시장 상태" value={marketSummary.status} body={marketSummary.text} />
-            <SummaryTile label="데이터 상태" value={modeLabel[dashboard.mode]} body="각 카드에서 실데이터, 샘플, 혼합, 데이터 없음 상태를 따로 확인할 수 있습니다." />
-            <SummaryTile label="오늘 추천 학습" value={study.title} body={study.reason} />
+
+        <aside className="rounded-lg border border-line bg-panel p-5 shadow-calm" aria-label="대시보드 학습 순서">
+          <p className="text-xs font-black uppercase text-marine">Study Map</p>
+          <h3 className="mt-2 text-2xl font-black text-ink">이 화면에서 배우는 순서</h3>
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <SummaryCard title="1. 종류" body="코인, 토큰, Layer 1, Layer 2, 스테이블코인, DeFi를 역할별로 나눕니다." />
+            <SummaryCard title="2. 구분" body="헷갈리는 개념을 짝으로 비교해 같은 말처럼 보이는 차이를 정리합니다." />
+            <SummaryCard title="3. 관계" body="금리와 유동성이 암호화폐 시장 심리에 어떤 압력을 주는지 봅니다." />
           </div>
-          <dl className="mt-5 grid grid-cols-2 gap-3">
-            <div className="rounded-md bg-paper p-4">
-              <dt className="text-sm font-bold text-muted">마지막 갱신</dt>
-              <dd className="mt-1 font-black">{new Date(dashboard.updatedAt).toLocaleString("ko-KR")}</dd>
-            </div>
-            <div className="rounded-md bg-paper p-4">
-              <dt className="text-sm font-bold text-muted">흐름 신호</dt>
-              <dd className="mt-1 font-black">{dashboard.flowSignals.length}개</dd>
-            </div>
-          </dl>
-          {dashboard.dataWarnings.length ? (
-            <div className="mt-5 rounded-md border border-amberline bg-[#fff8e8] p-4 text-sm font-bold leading-6 text-ink">
-              {dashboard.dataWarnings.join(" ")}
-            </div>
-          ) : null}
+          <div className="mt-5 rounded-md border border-amberline bg-[#fff8e8] p-4 text-sm font-bold leading-6 text-ink">
+            이 대시보드는 학습용입니다. 특정 코인 매수·매도나 가격 예측을 제공하지 않습니다.
+          </div>
         </aside>
       </section>
 
-      <section id="flow" className="space-y-5 py-10">
-        <MoneyJourney />
-        <div>
-          <div className="mb-5 grid gap-3 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
-            <div>
-              <p className="text-xs font-black uppercase text-forest">Money Flow Engine</p>
-              <h2 className="text-3xl font-black text-ink md:text-4xl">오늘 돈은 어디로 움직이고 있는가?</h2>
-            </div>
-            <p className="rounded-lg border border-line bg-panel p-4 text-sm font-bold leading-6 text-muted">
-              {marketSummary.text}
-            </p>
-          </div>
-          <MiniFlowMap signals={dashboard.flowSignals} />
-        </div>
-      </section>
-
-      <section className="py-6">
-        <MarketBriefCard brief={brief} />
-      </section>
-
-      <section className="py-6">
-        <AIMentorPanel metrics={dashboard.metrics} news={news.items} />
-      </section>
-
-      <section className="grid gap-5 py-10 lg:grid-cols-[1.2fr_0.8fr]">
-        <DailyQuestionCard question={dailyQuestion} metrics={dashboard.metrics} />
-        <UserNotes targetType="daily-question" targetId={dailyQuestion.id} />
-      </section>
-
-      <section id="learn" className="space-y-5 py-10">
-        <LessonRecommendations recommendations={recommendations} lessons={lessons} />
-      </section>
-
-      <section id="market" className="py-10">
-        <div className="mb-5 flex flex-col justify-between gap-3 md:flex-row md:items-end">
-          <div>
-            <p className="text-xs font-black uppercase text-forest">Market Cards</p>
-            <h2 className="text-3xl font-black text-ink md:text-4xl">핵심 시장 카드</h2>
-          </div>
-          <p className="max-w-xl text-sm leading-6 text-muted">
-            첫 화면에는 요약을 먼저 보여주고, 각 카드의 주의사항과 출처는 자세히 보기에서 확인합니다.
-          </p>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {marketCap ? <MetricCard metric={marketCap} size="feature" /> : null}
-          {midMetrics.map((metric) => (
-            <MetricCard key={metric.metricId} metric={metric} size="standard" />
-          ))}
-          {supportMetrics.map((metric) => (
-            <MetricCard key={metric.metricId} metric={metric} size="compact" />
+      <section id="categories" className="py-12">
+        <SectionHeading
+          kicker="Crypto Types"
+          title="암호화폐 대분류·소분류 지도"
+          body="암호화폐는 가격표로 보면 모두 비슷해 보이지만, 실제로는 하는 일이 다릅니다. 아래 카드는 먼저 큰 역할을 잡고, 그 안에서 소분류와 대표 사례를 구분하도록 만들었습니다."
+        />
+        <div className="mt-6 grid gap-5 lg:grid-cols-2">
+          {cryptoCategories.map((category) => (
+            <CategoryCard key={category.id} category={category} />
           ))}
         </div>
       </section>
 
-      <section className="space-y-5 py-10">
-        <LearningProgress totalLessons={lessons.length} />
-        <div>
-          <p className="text-xs font-black uppercase text-forest">Learning Content</p>
-          <h2 className="text-3xl font-black text-ink md:text-4xl">학습 로드맵</h2>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-muted">
-            시장 카드와 돈의 흐름에서 자주 마주치는 개념을 질문형 카드로 정리했습니다.
-          </p>
+      <section id="classification" className="py-12">
+        <SectionHeading
+          kicker="Beginner Distinctions"
+          title="초보자가 가장 많이 헷갈리는 구분"
+          body="같은 암호화폐처럼 보여도 코인과 토큰, 체인과 프로토콜, 중앙화 거래소와 탈중앙화 거래소는 완전히 다른 기준입니다."
+        />
+        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {classificationRules.map((rule) => (
+            <article key={rule.title} className="rounded-lg border border-line bg-panel p-5">
+              <h3 className="text-xl font-black text-ink">{rule.title}</h3>
+              <p className="mt-3 text-sm font-bold leading-6 text-muted">{rule.simpleDefinition}</p>
+              <p className="mt-4 rounded-md bg-paper p-3 text-sm leading-6 text-ink">{rule.beginnerExample}</p>
+              <p className="mt-3 text-sm leading-6 text-muted">{rule.whyItMatters}</p>
+            </article>
+          ))}
         </div>
-        <LessonRail />
       </section>
 
-      <section className="py-10">
-        <NewsConnectionPanel items={news.items} meta={news.meta} />
+      <section id="economy" className="py-12">
+        <SectionHeading
+          kicker="Money, Rates, Economy"
+          title="암호화폐와 돈·금리·경제의 관계"
+          body="암호화폐는 혼자 움직이지 않습니다. 금리, 달러 유동성, 물가, 경기 심리, 규제, 온체인 활동이 서로 다른 압력을 만듭니다."
+        />
+        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+          {economicRelationships.map((item) => (
+            <article key={item.id} className="rounded-lg border border-line bg-panel p-5">
+              <p className="text-xs font-black uppercase text-forest">{item.title}</p>
+              <h3 className="mt-2 text-2xl font-black text-ink">{item.simpleQuestion}</h3>
+              <p className="mt-3 text-sm font-bold leading-6 text-muted">{item.plainExplanation}</p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <InfoBox label="올라갈 때" body={item.whenRising} />
+                <InfoBox label="내려갈 때" body={item.whenFalling} />
+              </div>
+              <InfoBox label="암호화폐와 연결" body={item.cryptoConnection} className="mt-3" />
+              <p className="mt-3 rounded-md border border-amberline bg-[#fff8e8] p-3 text-sm font-bold leading-6 text-ink">
+                주의: {item.caution}
+              </p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section id="flow" className="py-12">
+        <SectionHeading
+          kicker="Learning Flow"
+          title="공부 순서: 돈에서 암호화폐 시장 해석까지"
+          body="경제 개념을 먼저 잡고, 암호화폐 분류를 붙인 뒤, 마지막에 돈이 어느 영역으로 이동하는지 해석합니다."
+        />
+        <ol className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {learningFlow.map((step, index) => (
+            <li key={step.title} className="rounded-lg border border-line bg-panel p-5">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-ink text-sm font-black text-white">
+                {index + 1}
+              </span>
+              <h3 className="mt-4 text-xl font-black text-ink">{step.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-muted">{step.description}</p>
+            </li>
+          ))}
+        </ol>
       </section>
     </main>
   );
 }
 
-function SummaryTile({ label, value, body }: { label: string; value: string; body: string }) {
+function SectionHeading({ kicker, title, body }: { kicker: string; title: string; body: string }) {
+  return (
+    <div className="max-w-4xl">
+      <p className="text-xs font-black uppercase text-forest">{kicker}</p>
+      <h2 className="mt-2 text-3xl font-black text-ink md:text-4xl">{title}</h2>
+      <p className="mt-3 text-base leading-7 text-muted">{body}</p>
+    </div>
+  );
+}
+
+function SummaryCard({ title, body }: { title: string; body: string }) {
   return (
     <article className="rounded-md border border-line bg-paper p-4">
-      <p className="text-sm font-black text-forest">{label}</p>
-      <h4 className="mt-1 text-lg font-black text-ink">{value}</h4>
+      <h4 className="font-black text-ink">{title}</h4>
       <p className="mt-2 text-sm leading-6 text-muted">{body}</p>
     </article>
   );
 }
 
+function CategoryCard({ category }: { category: CryptoCategory }) {
+  return (
+    <article className="rounded-lg border border-line bg-panel p-5">
+      <h3 className="text-2xl font-black text-ink">{category.majorCategory}</h3>
+      <p className="mt-3 text-sm font-bold leading-6 text-muted">{category.beginnerDefinition}</p>
+      <InfoBox label="무엇을 하나요?" body={category.whatItDoes} className="mt-4" />
+      <div className="mt-4 grid gap-3">
+        {category.subCategories.map((subCategory) => (
+          <div key={subCategory.name} className="rounded-md bg-paper p-4">
+            <h4 className="font-black text-ink">{subCategory.name}</h4>
+            <p className="mt-2 text-sm leading-6 text-muted">{subCategory.plainExplanation}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {subCategory.examples.map((example) => (
+                <span key={`${subCategory.name}-${example.name}`} className="rounded-md border border-line bg-panel px-3 py-2 text-xs font-black text-ink">
+                  {example.name}
+                  {example.ticker ? ` (${example.ticker})` : ""}: {example.role}
+                </span>
+              ))}
+            </div>
+            <ul className="mt-3 grid gap-2 text-sm leading-6 text-muted">
+              {subCategory.watchPoints.map((point) => (
+                <li key={point}>확인할 점: {point}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+      <InfoBox label="돈의 흐름에서 역할" body={category.moneyFlowRole} className="mt-4" />
+      <p className="mt-3 rounded-md border border-amberline bg-[#fff8e8] p-3 text-sm font-bold leading-6 text-ink">
+        흔한 오해: {category.commonMisunderstanding}
+      </p>
+    </article>
+  );
+}
 
+function InfoBox({ label, body, className = "" }: { label: string; body: string; className?: string }) {
+  return (
+    <div className={`rounded-md bg-paper p-3 ${className}`}>
+      <p className="text-xs font-black uppercase text-marine">{label}</p>
+      <p className="mt-1 text-sm leading-6 text-muted">{body}</p>
+    </div>
+  );
+}

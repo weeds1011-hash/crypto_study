@@ -222,10 +222,13 @@ describe("Money Flow Academy learning flow UX", () => {
     expect(flowNav).toContain("min-h-11");
   });
 
-  it("puts the home page money flow question before the market brief", () => {
+  it("puts crypto classification and economy relationships at the center of the home page", () => {
     const source = fs.readFileSync(path.join(root, "src/app/page.tsx"), "utf8");
 
-    expect(source).toContain("오늘 돈은 어디로 움직이고 있는가?");
-    expect(source.indexOf("<section id=\"flow\"")).toBeLessThan(source.indexOf("<MarketBriefCard brief={brief}"));
+    expect(source).toContain("암호화폐 대분류·소분류 지도");
+    expect(source).toContain("암호화폐와 돈·금리·경제의 관계");
+    expect(source).toContain("특정 코인 매수·매도나 가격 예측을 제공하지 않습니다.");
+    expect(source).not.toContain("<MarketBriefCard brief={brief}");
   });
 });
+

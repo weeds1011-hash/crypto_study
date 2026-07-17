@@ -1,26 +1,24 @@
-import { existsSync, readFileSync } from "node:fs";
+﻿import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import robots from "@/app/robots";
 import sitemap from "@/app/sitemap";
-import { siteUrl, staticRoutes } from "@/config/routes";
+import { navItems, siteUrl, staticRoutes } from "@/config/routes";
+import { listAlertRules } from "@/features/alerts/alert-storage";
 import { profileBySymbol } from "@/features/onchain/coin-profiles";
 import { buildOnchainInsight } from "@/features/onchain/insights";
-import { listAlertRules } from "@/features/alerts/alert-storage";
 import { listWatchItems } from "@/features/watchlist/watchlist-storage";
 import type { ChainMetricSnapshot } from "@/server/providers/types";
 
 const appDir = join(process.cwd(), "src", "app");
 
 describe("final route QA", () => {
-  it("keeps all major route files present for rendering", () => {
+  it("keeps the core learning route files present for rendering", () => {
     const routeFiles = [
       "page.tsx",
-      join("chains", "page.tsx"),
-      join("coins", "[symbol]", "page.tsx"),
       join("learn", "page.tsx"),
-      join("money-flow", "page.tsx"),
-      join("alerts", "page.tsx"),
+      join("glossary", "page.tsx"),
+      join("coins", "[symbol]", "page.tsx"),
     ];
 
     expect(routeFiles.every((file) => existsSync(join(appDir, file)))).toBe(true);
@@ -45,7 +43,8 @@ describe("final SEO QA", () => {
     const routes = sitemap().map((entry) => entry.url);
 
     expect(routes).toContain(`${siteUrl}/`);
-    expect(routes).toContain(`${siteUrl}/chains`);
+    expect(routes).toContain(`${siteUrl}/learn`);
+    expect(routes).toContain(`${siteUrl}/glossary`);
     expect(routes).toContain(`${siteUrl}/coins/btc`);
     expect(new Set(routes).size).toBe(routes.length);
   });
@@ -54,10 +53,17 @@ describe("final SEO QA", () => {
     expect(robots().sitemap).toBe(`${siteUrl}/sitemap.xml`);
   });
 
-  it("keeps nav routes aligned with app routes", () => {
-    expect(staticRoutes).toContain("/chains");
-    expect(staticRoutes).toContain("/alerts");
-    expect(staticRoutes).toContain("/coins/btc");
+  it("keeps navigation aligned with the rebuilt category dashboard", () => {
+    expect(staticRoutes).toEqual(["/", "/learn", "/glossary"]);
+
+    expect(navItems.map((item) => item.label)).toEqual([
+      "분류 대시보드",
+      "대분류·소분류",
+      "개념 구분",
+      "경제 관계",
+      "전체 강의",
+      "용어사전",
+    ]);
   });
 });
 
@@ -102,3 +108,4 @@ describe("final data-state QA", () => {
     expect(listWatchItems(broken)).toEqual([]);
   });
 });
+
